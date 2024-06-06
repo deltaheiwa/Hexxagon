@@ -33,5 +33,9 @@ FetchContent_MakeAvailable(fmt)
 
 add_executable(Hexagon main.cpp game.cpp
         game.h
+        window_wrapper.cpp
+        window_wrapper.h
+        game_entities.cpp
+        game_entities.h
 )
 target_link_libraries(Hexagon sfml-graphics fmt)

@@ -1,6 +1,7 @@
 #ifndef HEXAGON_GAME_H
 #define HEXAGON_GAME_H
 
+#include "window_wrapper.h"
 #include "SFML/Graphics/RenderWindow.hpp"
 
 namespace Hexxagon {
@@ -8,29 +9,29 @@ namespace Hexxagon {
 }
 
 class Hexxagon::Game final {
-private:
-    Game();
-    ~Game() = default;
-    sf::RenderWindow window;
-    enum WINDOW_STATE {
+public:
+    enum GAME_STATE {
         MENU,
         IN_GAME,
         PAUSED
     };
-    WINDOW_STATE state;
 
-    auto processEvents() -> void;
-    auto update() -> void;
-    auto render() -> void;
-
-    auto setState(WINDOW_STATE state);
-public:
     auto operator=(const Game&) = delete;
     Game(Game &other_instance) = delete;
 
     static Game& getInstance();
 
+    auto getState() const -> GAME_STATE;
+    auto setState(GAME_STATE const &state);
+
     auto run() -> void;
+private:
+    Game();
+    ~Game() = default;
+    WindowWrapper window;
+    GAME_STATE state;
+
+    auto update() -> void;
 };
 
 #endif //HEXAGON_GAME_H
