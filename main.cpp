@@ -1,14 +1,12 @@
-#include <iostream>
-#include <SFML/Graphics.hpp>
 #include <fmt/core.h>
-#include "game.h"
+#include "main/game.h"
 
 
 
 auto main() -> int {
-    auto& game = Hexxagon::Game::getInstance();
+    auto game = Hexxagon::Game::getInstance();
 
-    game.run();
+    game->run();
 
     return 0;
 }

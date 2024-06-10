@@ -31,11 +31,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SFML)
 FetchContent_MakeAvailable(fmt)
 
-add_executable(Hexagon main.cpp game.cpp
-        game.h
-        window_wrapper.cpp
-        window_wrapper.h
-        game_entities.cpp
-        game_entities.h
+add_executable(Hexagon
+        main.cpp
+        main/game.cpp main/game.h
+        main/window_wrapper.cpp main/window_wrapper.h
+        entities/game_entities.cpp
+        entities/playable_sides.cpp entities/playable_sides.h entities/player.h entities/ai.h
+        main/util.h
+        entities/board.cpp
+        entities/board.h
+        entities/tile.h
+        main/util.cpp
+        entities/pawn.h
 )
 target_link_libraries(Hexagon sfml-graphics fmt)

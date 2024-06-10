@@ -1,8 +1,11 @@
 #ifndef HEXAGON_GAME_H
 #define HEXAGON_GAME_H
 
+#include <queue>
+#include "util.h"
 #include "window_wrapper.h"
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "../entities/board.h"
 
 namespace Hexxagon {
     class Game;
@@ -10,26 +13,21 @@ namespace Hexxagon {
 
 class Hexxagon::Game final {
 public:
-    enum GAME_STATE {
-        MENU,
-        IN_GAME,
-        PAUSED
-    };
-
     auto operator=(const Game&) = delete;
     Game(Game &other_instance) = delete;
+    ~Game() = delete;
 
-    static Game& getInstance();
+    static Game* getInstance();
 
-    auto getState() const -> GAME_STATE;
-    auto setState(GAME_STATE const &state);
+    auto getWindow() -> WindowWrapper&;
 
     auto run() -> void;
 private:
     Game();
-    ~Game() = default;
     WindowWrapper window;
-    GAME_STATE state;
+
+    std::string gameFenCode;
+    std::queue<std::pair<HexxagonUtil::Coordinate, HexxagonUtil::Coordinate>> gamePgnMoves;
 
     auto update() -> void;
 };

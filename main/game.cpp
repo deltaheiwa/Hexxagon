@@ -1,15 +1,19 @@
 #include "game.h"
-#include <SFML/Graphics.hpp>
+#include "SFML/Graphics.hpp"
 
 using namespace Hexxagon;
 
-Game::Game() : window(sf::VideoMode(1600, 900), "Hexxagon"), state(GAME_STATE::MENU) {
-    window.setFramerateLimit(24);
+Game::Game() : window(sf::VideoMode(1600, 900), "Hexxagon", WindowWrapper::WINDOW_STATE::MENU) {
+    window.setFramerateLimit(60);
 }
 
-Game& Game::getInstance() {
-    static auto instance = Game();
+Game* Game::getInstance() {
+    static auto instance = new Game();
     return instance;
+}
+
+auto Game::getWindow() -> WindowWrapper& {
+    return window;
 }
 
 auto Game::run() -> void {
@@ -25,15 +29,6 @@ auto Game::run() -> void {
         // which is... a bit more than I would expect from the black screen, but I assume it's just Windows having a stroke. On Linux it's not that bad)
         window.render();
     }
-}
-
-auto Game::getState() const -> GAME_STATE {
-    return this->state;
-}
-
-
-auto Game::setState(GAME_STATE const &state) {
-    this->state=state;
 }
 
 auto Game::update() -> void {
