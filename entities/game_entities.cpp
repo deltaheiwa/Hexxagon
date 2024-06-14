@@ -2,27 +2,12 @@
 #include "pawn.h"
 
 namespace Hexxagon {
-    float const Tile::radius = 40;
-
     Tile::Tile(HexxagonUtil::Coordinate c) : status(TileStatus::EMPTY), coordinate(c) {
         structureShape();
     }
 
     Tile::Tile(HexxagonUtil::Coordinate c, TileStatus status) : status(status), coordinate(c) {
         structureShape();
-        /*
-        switch (status) {
-            case TileStatus::EMPTY:
-                shape.setFillColor(sf::Color::White);
-                break;
-            case TileStatus::RUBY:
-                shape.setFillColor(sf::Color::Red);
-                break;
-            case TileStatus::PEARL:
-                shape.setFillColor(sf::Color::White);
-                break;
-        }
-        */
     }
 
     void Tile::structureShape() {
@@ -32,11 +17,11 @@ namespace Hexxagon {
         shape.setOrigin(radius, radius);
         shape.setFillColor(HexxagonUtil::CustomColors::DarkPurple);
         shape.setOutlineThickness(2);
-        shape.setOutlineColor(sf::Color::Black);
+        shape.setOutlineColor(HexxagonUtil::CustomColors::PurplishPink);
     }
 
     void Tile::addPawn(Pawn *pawn) {
-        setStatus(pawn->getAlignment() == Pawn::PawnAlignment::RUBY ? TileStatus::RUBY : TileStatus::PEARL);
+        setStatus(pawn->getAlignment() == PlayableSides::RUBIES ? TileStatus::RUBY : TileStatus::PEARL);
     }
 
     auto Tile::getCoordinate() const -> HexxagonUtil::Coordinate {
@@ -47,12 +32,21 @@ namespace Hexxagon {
         return radius;
     }
 
-    auto Tile::getShape() const -> sf::CircleShape {
-        return shape;
+    auto Tile::getShape() -> sf::CircleShape* {
+        return &shape;
     }
 
     auto Tile::getStatus() const -> Tile::TileStatus {
         return status;
+    }
+
+    auto Tile::getPixelPosition() const -> std::pair<float, float> {
+        return std::make_pair(x, y);
+    }
+
+    void Tile::setPixelPosition(float &x, float &y) {
+        this->x = x;
+        this->y = y;
     }
 
     void Tile::setStatus(Tile::TileStatus set_status) {
@@ -72,27 +66,31 @@ namespace Hexxagon {
 
 
     Pawn::Pawn() {
-
+        structureShape();
     }
 
-    Pawn::Pawn(PawnAlignment alignment) : alignment(alignment) {
-
+    Pawn::Pawn(PlayableSides::Side alignment) : alignment(alignment) {
+        structureShape();
     }
 
-    auto Pawn::getAlignment() const -> PawnAlignment {
+    auto Pawn::getAlignment() const -> PlayableSides::Side {
         return alignment;
     }
 
-    void Pawn::draw(sf::RenderTarget &target, sf::RenderStates states) const {
-        sf::CircleShape shape(20);
+    void Pawn::structureShape() {
         switch (alignment) {
-            case PawnAlignment::RUBY:
+            case PlayableSides::RUBIES:
                 shape.setFillColor(sf::Color::Red);
+                shape.setOutlineThickness(4);
+                shape.setOutlineColor(HexxagonUtil::CustomColors::DarkRed);
+                shape.setPointCount(6);
                 break;
-            case PawnAlignment::PEARL:
+            case PlayableSides::PEARLS:
                 shape.setFillColor(sf::Color::White);
+                shape.setOutlineThickness(3);
+                shape.setOutlineColor(HexxagonUtil::CustomColors::SoftPink);
                 break;
         }
-        target.draw(shape, states);
+        shape.setRadius(radius);
     }
 } // Hexxagon

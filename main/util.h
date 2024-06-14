@@ -2,6 +2,7 @@
 #define HEXAGON_UTIL_H
 
 #include <string>
+#include <tuple>
 #include "SFML/Graphics/Color.hpp"
 
 namespace HexxagonUtil {

@@ -1,4 +1,5 @@
 #include "util.h"
+#include <tuple>
 
 namespace HexxagonUtil {
     bool Coordinate::operator<(const Coordinate &other) const {

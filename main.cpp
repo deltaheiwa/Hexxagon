@@ -1,12 +1,12 @@
-#include <fmt/core.h>
-#include "main/game.h"
-
+#include "main/game_manager.h"
 
 
 auto main() -> int {
-    auto game = Hexxagon::Game::getInstance();
+    auto const game = Hexxagon::GameManager::getInstance();  // Pointer to the game instance
 
     game->run();
+
+
 
     return 0;
 }

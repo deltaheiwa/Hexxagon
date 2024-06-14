@@ -4,6 +4,7 @@
 #include "SFML/Window.hpp"
 #include "fmt/core.h"
 #include "../entities/board.h"
+#include "game_manager.h"
 
 using namespace Hexxagon;
 
@@ -119,6 +120,20 @@ void WindowWrapper::render() {
 
 // ------------------ Event handling ------------------
 
+void WindowWrapper::determineMenuLayer(sf::Event event) {
+    switch (MenuCache::getCurrentLayer()) {
+        case MenuCache::MENU_LAYER::MAIN:
+            MenuEventHandler::handleMainMenuKeyPressed(this, event.key);
+            break;
+        case MenuCache::MENU_LAYER::START_SELECT:
+            MenuEventHandler::handleStartSelectMenuKeyPressed(this, event.key);
+            break;
+        case MenuCache::MENU_LAYER::LOAD_SELECT:
+            MenuEventHandler::handleLoadSelectMenuKeyPressed(this, event.key);
+            break;
+    }
+}
+
 void WindowWrapper::MenuEventHandler::handleMainMenuKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) {
     if (key.code == sf::Keyboard::Enter) {
         switch (MenuCache::getSelectedMainMenuButton()) {
@@ -187,6 +202,31 @@ void WindowWrapper::MenuEventHandler::handleLoadSelectMenuKeyPressed(WindowWrapp
     }
 }
 
+// ------
+
+void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* window, sf::Event::MouseButtonEvent mouse) {
+    fmt::println("Mouse pressed at ({}, {})", mouse.x, mouse.y);
+    auto board = GameManager::getInstance()->getBoard();
+    auto pressedTiles = std::vector<HexxagonUtil::Coordinate>();
+    for (auto &[coordinate, tile] : *board.getTiles()) {
+        // fmt::println("Checking tile at ({}, {})", coordinate.vertical, coordinate.diagonal);
+        auto tileShape = tile.getShape();
+        auto bounds = tileShape->getGlobalBounds();
+        // fmt::println("Bounds: left: {}, top: {}, width: {}, height: {}", bounds.left, bounds.top, bounds.width, bounds.height);
+        if (bounds.contains(mouse.x, mouse.y)) {
+            fmt::println("Clicked on tile at ({}, {})", coordinate.vertical, coordinate.diagonal);
+            pressedTiles.push_back(coordinate);
+        }
+    }
+    if (pressedTiles.size() > 1 || pressedTiles.empty()) {
+        // Do nothing if more than one tile is pressed or no tile is pressed. For now.
+        return;
+    }
+
+
+
+}
+
 void WindowWrapper::processEvents() {
     sf::Event event;
     while (pollEvent(event)) {
@@ -195,19 +235,27 @@ void WindowWrapper::processEvents() {
                 close();
                 break;
             case sf::Event::KeyPressed:
-                switch (MenuCache::getCurrentLayer()) {
-                    case MenuCache::MENU_LAYER::MAIN:
-                        MenuEventHandler::handleMainMenuKeyPressed(this, event.key);
+                switch (state) {
+                    case WINDOW_STATE::MENU:
+                        determineMenuLayer(event);
                         break;
-                    case MenuCache::MENU_LAYER::START_SELECT:
-                        MenuEventHandler::handleStartSelectMenuKeyPressed(this, event.key);
+                    case WINDOW_STATE::IN_GAME:
+
                         break;
-                    case MenuCache::MENU_LAYER::LOAD_SELECT:
-                        MenuEventHandler::handleLoadSelectMenuKeyPressed(this, event.key);
+                    case WINDOW_STATE::PAUSED:
                         break;
                 }
                 break;
             case sf::Event::MouseButtonPressed:
+                switch (state) {
+                    case WINDOW_STATE::MENU:
+                        break;
+                    case WINDOW_STATE::IN_GAME:
+                        GameEventHandler::handleInGameMousePressed(this, event.mouseButton);
+                        break;
+                    case WINDOW_STATE::PAUSED:
+                        break;
+                }
                 break;
             default:
                 break;
@@ -351,7 +399,8 @@ void WindowWrapper::drawLoadSelectMenu(sf::Font &font) {
 }
 
 void WindowWrapper::handleInGame() {
-    auto board = Board::getInstance();
+    GameManager::getInstance()->createBoard(false);
+    auto board = GameManager::getInstance()->getBoard();
     board.drawBoard(*this);
 }
 

@@ -1,22 +1,21 @@
 #ifndef HEXAGON_PAWN_H
 #define HEXAGON_PAWN_H
 
+#include "playable_sides.h"
+
 namespace Hexxagon {
     class Pawn {
     public:
-        enum PawnAlignment {
-            RUBY,
-            PEARL
-        };
         Pawn();
-        Pawn(PawnAlignment alignment);
+        Pawn(PlayableSides::Side alignment);
 
-        auto getAlignment() const -> PawnAlignment;
-
-        void draw(sf::RenderTarget &target, sf::RenderStates states) const;
+        auto getAlignment() const -> PlayableSides::Side;
     private:
-        PawnAlignment alignment;
+        PlayableSides::Side alignment;
+        sf::CircleShape shape;
+        static constexpr float radius = 20.0f;
 
+        void structureShape();
     };
 }
 

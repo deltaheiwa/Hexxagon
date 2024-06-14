@@ -13,17 +13,12 @@ namespace Hexxagon {
         };
 
         auto getSide() const -> Side;
-        auto setSide(Side const &side) -> void;
 
-        auto getAllPawnPositions() const -> std::set<HexxagonUtil::Coordinate>;
-
-        auto addPawnPosition(HexxagonUtil::Coordinate const &position) -> void;
-        auto removePawnPosition(HexxagonUtil::Coordinate const &position) -> void;
-
+        virtual ~PlayableSides() = default;
 
     private:
         Side side;
-        std::set<HexxagonUtil::Coordinate> pawnPositions;
+        std::set<HexxagonUtil::Coordinate> occupiedCoordinates;
     };
 
 } // Hexxagon

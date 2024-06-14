@@ -5,8 +5,11 @@
 
 namespace Hexxagon {
     class AI : public PlayableSides {
+    private:
+        Side side;
     public:
-        AI();
+        AI(Side side);
+        ~AI() override = default;
     };
 }
 

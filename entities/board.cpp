@@ -4,93 +4,76 @@
 #include "board.h"
 #include "tile.h"
 #include "../main/window_wrapper.h"
-#include "../main/game.h"
+#include "../main/game_manager.h"
 
 namespace Hexxagon {
-    short Board::size = 4;
-
-    Board::Board() {
-        for (short p = -1; p < 2; p++) {
-            if (p == 0) continue;
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    auto coordinate = HexxagonUtil::Coordinate(i*p, j*p);
-                    Tile tile = Tile(HexxagonUtil::Coordinate(i*p, j*p));
-                    setTile(coordinate, tile); // Essentially, this is a mask for the board
-                }
-            }
-        }
+    auto Board::getSize() const -> short {
+        return size;
     }
 
-    auto Board::getInstance() -> Board& {
-        static Board instance = Board();
-        return instance;
-    }
-
-    auto Board::getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<Tile> {
+    auto Board::getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<Tile*> {
         // https://en.cppreference.com/w/cpp/utility/optional
         if (!tiles.contains(coordinate)) {
             return std::nullopt;
         }
-        return tiles.at(coordinate);
+        return const_cast<Tile*>(&tiles.at(coordinate));
     }
 
-    auto Board::setTile(const HexxagonUtil::Coordinate &coordinate, Tile &tile) -> void {
+    auto Board::setTile(const HexxagonUtil::Coordinate &coordinate, Tile tile) -> Tile* {
         tiles[coordinate] = tile;
+        return &tiles.at(coordinate);
     }
 
+    auto Board::getTiles() -> std::map<HexxagonUtil::Coordinate, Tile>* {
+        return &tiles;
+    }
 
     auto Board::drawBoard(Hexxagon::WindowWrapper &window) -> void {
-        auto ex_tile = getTile(HexxagonUtil::Coordinate(0, 0));
-        auto hexWidth = 2 * ex_tile->getRadius();
-        auto hexHeight = std::sqrt(3) * ex_tile->getRadius();
+        auto const ex_tile = Tile({0,0});
 
-        auto windowDims = window.getWindowDims();
+        auto const hexWidth = 2 * ex_tile.getRadius();
+        auto const hexHeight = std::sqrt(3) * ex_tile.getRadius();
 
-        auto offsetX = 1000;
-        auto offsetY = 500;
+        auto const [width, height] = window.getWindowDims();
 
-        auto windowDiv = window.getWindowHeightPartition();
+        auto rows = size + 1;
+
+        auto excludedCoordinates = std::vector<HexxagonUtil::Coordinate>{
+            {-1, 0},
+            {0, -1},
+            {1, 0},
+        };
+
+        auto const offsetX = width / 2 - (hexWidth * rows) / 2;
+        auto const offsetY = window.getWindowHeightPartition() * 2;
         // size = 4;
-        for (int q = 0; q <= size*2; q++) {
-            for (int r = std::max(-size, -q - size); r <= std::min((int)(size), -q + size); r++) {
-                auto coordinate = HexxagonUtil::Coordinate(q, r);
-                if (auto tile = getTile(coordinate); tile.has_value()) {
-                    auto tileShape = tile->getShape();
-                    float x = (q * 1.5 * ex_tile->getRadius()) + offsetX;
-                    float y = (r * hexHeight + (q % 2) * hexHeight / 2) + offsetY;
-
-                    tileShape.setPosition(x, y + windowDiv);
-                    window.draw(tileShape);
+        for (int q = -size; q <= size; q++) {
+            for (int r = 0; r < rows; r++) {
+                auto const flipper = (q < 0) ? -1 : 1;
+                auto coordinate = HexxagonUtil::Coordinate(q, r-size);
+                if (std::find(excludedCoordinates.begin(), excludedCoordinates.end(), coordinate) != excludedCoordinates.end()) {
+                    continue;
                 }
+                auto tile = setTile(coordinate, Tile(coordinate));
+                auto tileShape = tile->getShape();
+                float x = (q + size) * 1.5 * hexWidth / 2 + offsetX;
+                float y = r * hexHeight + flipper * q * hexHeight / 2 + offsetY;
+
+                // fmt::print("x: {}, y: {}\n", x, y);
+
+                tileShape->setPosition(x, y);
+                tile->setPixelPosition(x, y);
+                window.draw(*tileShape);
+                // fmt::println("tile with coordinate ({}, {}) at x: {}, y: {}", coordinate.vertical, coordinate.diagonal, tile->getPixelPosition().first, tile->getPixelPosition().second);
+
+            }
+            if (q < 0) {
+                rows++;
+            } else {
+                rows--;
             }
         }
-        /*
-        for (int xCoord = 0; xCoord < size*2; xCoord++) {
-            for (int yCoord = 0; yCoord < size*2; yCoord++) {
-                auto coordinate = HexxagonUtil::Coordinate(xCoord - 4, yCoord - 4);
-                if (auto tile = getTile(coordinate); tile.has_value()) {
-                    auto tileShape = tile->getShape();
-                    // if (xCoord > size) { xCoord = xCoord * (-1); offsetY = offsetY + hexHeight / 2; }
-
-                    auto x = xCoord * (1.5 * ex_tile->getRadius()) + offsetX;
-                    auto y = yCoord * hexHeight + offsetY;
-
-                    if (xCoord % 2 != 0) {
-                        y += hexHeight / 2;
-                    }
-
-                    tileShape.setPosition(x, y + windowDiv);
-
-                    auto x = xCoord * hexWidth + offsetX;
-                    auto y = yCoord * hexHeight + offsetY;
-                    if (xCoord % 2 == 1) { y += hexHeight / 2; x -= (ex_tile->getRadius() / 2) * xCoord; }
-                    else if (xCoord % 2 == 0 && xCoord != 0) { x -= ex_tile->getRadius(); }
-                    tileShape.setPosition(x + windowDiv, y);
-                    window.draw(tileShape);
-                }
-            }
-        }*/
+        // Sleep(10000);
     }
 
     auto Board::clearBoard() -> void {
@@ -99,5 +82,18 @@ namespace Hexxagon {
         }
     }
 
+    auto BoardBuilder::setSize(short size) -> BoardBuilder& {
+        board.size = size;
+        return *this;
+    }
+
+    auto BoardBuilder::addPlayer(std::shared_ptr<PlayableSides> player) -> BoardBuilder& {
+        board.players.push_back(std::move(player));
+        return *this;
+    }
+
+    auto BoardBuilder::build() -> std::shared_ptr<Board> {
+        return std::make_shared<Board>(std::move(board));
+    }
 
 } // Hexxagon

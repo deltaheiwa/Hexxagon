@@ -5,7 +5,14 @@
 
 namespace Hexxagon {
     class Player : public PlayableSides {
+    private:
+        Side side;
+    public:
+        Player();
+        Player(Side alignment);
+        ~Player() override = default;
 
+        auto getAlignment() const -> Side;
     };
 }
 

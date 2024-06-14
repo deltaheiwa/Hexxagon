@@ -1,23 +1,15 @@
 #include "playable_sides.h"
+#include "ai.h"
+#include "player.h"
 
 namespace Hexxagon {
     auto PlayableSides::getSide() const -> Side {
         return side;
     }
 
-    auto PlayableSides::setSide(Side const &setting_side) -> void {
-        this->side = setting_side;
-    }
+    AI::AI(PlayableSides::Side side) : side(side) { }
 
-    auto PlayableSides::getAllPawnPositions() const -> std::set<HexxagonUtil::Coordinate> {
-        return pawnPositions;
-    }
+    Player::Player() : side(PlayableSides::RUBIES) { }
+    Player::Player(PlayableSides::Side alignment) : side(alignment) { }
 
-    auto PlayableSides::addPawnPosition(HexxagonUtil::Coordinate const &position) -> void {
-        pawnPositions.insert(position);
-    }
-
-    auto PlayableSides::removePawnPosition(HexxagonUtil::Coordinate const &position) -> void {
-        pawnPositions.erase(position);
-    }
 } // Hexxagon

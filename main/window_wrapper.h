@@ -66,11 +66,18 @@ private:
         static auto handleLoadSelectMenuKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) -> void;
     };
 
+    class GameEventHandler {
+    public:
+        static auto handleInGameMousePressed(WindowWrapper* window, sf::Event::MouseButtonEvent mouse) -> void;
+    };
+
     void loadIcon();
 
     sf::Font loadFont();
 
     void handleMenu();
+
+    void determineMenuLayer(sf::Event event);
 
     bool isMouseOverButton(sf::Vector2i mousePosition, const sf::Text& button);
 
