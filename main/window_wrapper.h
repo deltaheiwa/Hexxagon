@@ -2,12 +2,15 @@
 #define HEXAGON_WINDOW_WRAPPER_H
 
 #include "SFML/Graphics.hpp"
+#include "background.h"
+#include <memory>
+#include <thread>
 
 namespace Hexxagon {
     class WindowWrapper;
 }
 
-class Hexxagon::WindowWrapper : public sf::RenderWindow {
+class Hexxagon::WindowWrapper final : public sf::RenderWindow {
 private:
     const std::string FONT_PATH = "../assets/pixelFont.ttf";
     unsigned int windowWidth = 0;
@@ -98,6 +101,9 @@ public:
     };
 
     WINDOW_STATE state;
+
+    Background background;
+    std::unique_ptr<std::thread> backgroundThread;
 
     WindowWrapper(sf::VideoMode mode, const std::string& title, WINDOW_STATE windowState);
     typedef RenderWindow super;

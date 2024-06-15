@@ -3,6 +3,7 @@
 
 #include <set>
 #include "../main/util.h"
+#include "SFML/Graphics.hpp"
 
 namespace Hexxagon {
     class PlayableSides {
@@ -14,7 +15,15 @@ namespace Hexxagon {
 
         auto getSide() const -> Side;
 
+        auto getOccupiedCoordinates() const -> std::set<HexxagonUtil::Coordinate>;
+
+        auto addOccupiedCoordinate(HexxagonUtil::Coordinate const &coordinate) -> void;
+
+        auto removeOccupiedCoordinate(HexxagonUtil::Coordinate const &coordinate) -> void;
+
+
         virtual ~PlayableSides() = default;
+
 
     private:
         Side side;

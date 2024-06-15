@@ -42,8 +42,9 @@ add_executable(Hexagon
         entities/board.h
         entities/tile.h
         main/util.cpp
-        entities/pawn.h
         main/background.cpp
         main/background.h
+        main/background.h
+        main/background.cpp
 )
 target_link_libraries(Hexagon sfml-graphics fmt)

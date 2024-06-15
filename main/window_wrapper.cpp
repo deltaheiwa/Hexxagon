@@ -1,3 +1,4 @@
+#include <thread>
 #include "window_wrapper.h"
 
 #include "SFML/Graphics.hpp"
@@ -13,10 +14,17 @@ WindowWrapper::MenuCache::START_SELECT_MENU_BUTTON WindowWrapper::MenuCache::sel
 WindowWrapper::MenuCache::LOAD_SELECT_MENU_BUTTON WindowWrapper::MenuCache::selectedLoadSelectMenuButton;
 WindowWrapper::MenuCache::MENU_LAYER WindowWrapper::MenuCache::currentLayer;
 
-WindowWrapper::WindowWrapper(sf::VideoMode mode, const std::string& title, WINDOW_STATE windowState) : super(mode, title, sf::Style::Titlebar | sf::Style::Close) {
+WindowWrapper::WindowWrapper(
+        sf::VideoMode mode,
+        const std::string& title,
+        WINDOW_STATE windowState
+        ) : super(mode, title, sf::Style::Titlebar | sf::Style::Close) // I didn't want to deal with resizing, so I just disabled it
+        {
     state = windowState;
+    background = Background();
     cacheWindowSize(mode.width, mode.height);
     loadIcon();
+    backgroundThread = std::make_unique<std::thread>(&Hexxagon::Background::run, &background);
 }
 
 void WindowWrapper::loadIcon() {
@@ -102,6 +110,7 @@ auto WindowWrapper::setState(WINDOW_STATE const &game_state) {
 
 void WindowWrapper::render() {
     clear();
+    background.drawParticles();
 
     switch (state) {
         case (WINDOW_STATE::MENU):
@@ -164,10 +173,11 @@ void WindowWrapper::MenuEventHandler::handleStartSelectMenuKeyPressed(WindowWrap
         switch (MenuCache::getSelectedStartSelectMenuButton()) {
             case MenuCache::START_SELECT_MENU_BUTTON::PLAYER_VS_PLAYER:
                 window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
-                // TODO: Implement game logic
+                Board::setGameMode(false);
                 break;
             case MenuCache::START_SELECT_MENU_BUTTON::PLAYER_VS_AI:
                 window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                Board::setGameMode(true);
                 break;
             case MenuCache::START_SELECT_MENU_BUTTON::BACK_START:
                 MenuCache::setCurrentLayer(MenuCache::MENU_LAYER::MAIN);
@@ -208,13 +218,12 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
     fmt::println("Mouse pressed at ({}, {})", mouse.x, mouse.y);
     auto board = GameManager::getInstance()->getBoard();
     auto pressedTiles = std::vector<HexxagonUtil::Coordinate>();
-    for (auto &[coordinate, tile] : *board.getTiles()) {
+    for (auto &[coordinate, tile] : *board->getTiles()) {
         // fmt::println("Checking tile at ({}, {})", coordinate.vertical, coordinate.diagonal);
         auto tileShape = tile.getShape();
         auto bounds = tileShape->getGlobalBounds();
         // fmt::println("Bounds: left: {}, top: {}, width: {}, height: {}", bounds.left, bounds.top, bounds.width, bounds.height);
         if (bounds.contains(mouse.x, mouse.y)) {
-            fmt::println("Clicked on tile at ({}, {})", coordinate.vertical, coordinate.diagonal);
             pressedTiles.push_back(coordinate);
         }
     }
@@ -223,7 +232,24 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
         return;
     }
 
+    auto pressedTile = pressedTiles[0];
+    auto tile = board->getTile(pressedTile);
+    if (!tile.has_value()) {
+        fmt::println("Tile not found at ({}, {})", pressedTile.vertical, pressedTile.diagonal);
+        return;
+    }
 
+    auto tileStatus = tile.value()->getStatus();
+    fmt::println("Tile at ({}, {}) is {}", pressedTile.vertical, pressedTile.diagonal, tile.value()->getTileStatusString());
+    if (*tileStatus == Tile::TileStatus::EMPTY) {
+        fmt::println("Tile is empty");
+        // TODO: Implement move
+        return;
+    }
+
+    if (board->getCurrentTurn() + 1 == *tileStatus) {
+        fmt::println("Pressed tile is of the current turn");
+    }
 
 }
 
@@ -394,14 +420,12 @@ void WindowWrapper::drawStartSelectMenu(sf::Font &font) {
 
 void WindowWrapper::drawLoadSelectMenu(sf::Font &font) {
     static sf::Vector2f arrowPosition;
-
+    // TODO: Implement load select menu
     sf::Text backText("Back", font, 50);
 }
 
 void WindowWrapper::handleInGame() {
-    GameManager::getInstance()->createBoard(false);
-    auto board = GameManager::getInstance()->getBoard();
-    board.drawBoard(*this);
+    GameManager::getInstance()->getBoard()->drawBoard(*this);
 }
 
 void WindowWrapper::handlePause() {

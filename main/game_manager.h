@@ -19,14 +19,14 @@ public:
 
     static GameManager* getInstance();
 
-    auto getWindow() -> WindowWrapper&;
-    auto getBoard() -> Board&;
-    auto createBoard(bool is_against_ai) -> void;
+    auto getWindow() -> std::shared_ptr<WindowWrapper>;
+    auto getBoard() -> std::shared_ptr<Board>;
+    auto createBoard() -> void;
 
     auto run() -> void;
 private:
     GameManager();
-    WindowWrapper window;
+    std::shared_ptr<WindowWrapper> window;
     std::shared_ptr<Board> board = nullptr;
 
     std::string gameFenCode;
