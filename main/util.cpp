@@ -19,6 +19,15 @@ namespace HexxagonUtil {
     sf::Color const CustomColors::SoftPink = sf::Color(255,192,203);
     sf::Color const CustomColors::SoftLightBlue = sf::Color(209,223,246);
     sf::Color const CustomColors::DarkRed = sf::Color(139,0,0);
+    sf::Color const CustomColors::Lime = sf::Color(0,255,127);
+
+    sf::Color CustomColors::lightenColor(const sf::Color &color, float factor) {
+        auto red = (sf::Uint8)(color.r + (255.0f - color.r) * factor);
+        auto green = (sf::Uint8)(color.g + (255.0f - color.g) * factor);
+        auto blue = (sf::Uint8)(color.b + (255.0f - color.b) * factor);
+
+        return {red, green, blue, color.a};
+    }
 
     float generateRandomNumber(float const &floor, float const &ceiling) {
         std::random_device rd;

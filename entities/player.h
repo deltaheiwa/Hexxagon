@@ -6,21 +6,25 @@
 namespace Hexxagon {
     class Player : public PlayableSides {
     private:
-        Side side;
         HexxagonUtil::Coordinate* selectedCoordinate = nullptr;
     public:
         Player();
         Player(Side alignment);
         ~Player() override = default;
 
-        auto getAlignment() const -> Side;
+        auto getType() const -> PlayerType override {
+            return type;
+        }
 
-        auto setSelectedCoordinate(HexxagonUtil::Coordinate const &coordinate) -> void;
+        auto setSelectedCoordinate(HexxagonUtil::Coordinate const &coordinate) -> void override;
 
-        auto clearSelectedCoordinate() -> void;
+        auto clearSelectedCoordinate() -> void override;
 
-        auto getSelectedCoordinate() const -> HexxagonUtil::Coordinate*;
+        auto getSelectedCoordinate() const -> HexxagonUtil::Coordinate* override;
 
+        auto hasSelectedCoordinate() const -> bool override {
+            return selectedCoordinate != nullptr;
+        }
     };
 }
 

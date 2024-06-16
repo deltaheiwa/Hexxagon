@@ -24,6 +24,30 @@ auto GameManager::getBoard() -> std::shared_ptr<Board> {
     return board;
 }
 
+auto GameManager::setBufferedMove(Move* move) -> void {
+    buffered_move = move;
+}
+
+auto GameManager::getBufferedMove() -> Move* {
+    return buffered_move;
+}
+
+auto GameManager::clearBufferedMove() -> void {
+    buffered_move = nullptr;
+}
+
+auto GameManager::setLastMove(Move* move) -> void {
+    last_move = move;
+}
+
+auto GameManager::getLastMove() -> Move* {
+    return last_move;
+}
+
+auto GameManager::clearLastMove() -> void {
+    last_move = nullptr;
+}
+
 auto GameManager::createBoard() -> void {
     if (board != nullptr) {
         return;
@@ -44,6 +68,26 @@ auto GameManager::createBoard() -> void {
     board->drawBoard(*window);
 }
 
+auto GameManager::performMove() -> void {
+    if (buffered_move == nullptr) {
+        return;
+    }
+    auto playerOptional = board->getPlayer(board->getCurrentTurn());
+    if (playerOptional == nullptr) {
+        return;
+    }
+    auto player = playerOptional.value();
+
+    // TODO: Implement move validation.
+
+    board->addPawn(buffered_move->getTo(), buffered_move->getSide());
+    if (!buffered_move->isCopy()) {
+        board->removePawn(buffered_move->getFrom());
+    }
+    clearBufferedMove();
+    player->clearSelectedCoordinate();
+}
+
 auto GameManager::run() -> void {
     // General idea of a game loop.
     while (window->isOpen()) {
@@ -58,6 +102,5 @@ auto GameManager::update() -> void {
     if (board == nullptr && window->getState() == WindowWrapper::WINDOW_STATE::IN_GAME) {
         createBoard();
     }
-
-
+    performMove();
 }

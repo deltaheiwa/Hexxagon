@@ -25,6 +25,9 @@ namespace HexxagonUtil {
         static sf::Color const SoftPink;
         static sf::Color const SoftLightBlue;
         static sf::Color const DarkRed;
+        static sf::Color const Lime;
+
+        static sf::Color lightenColor(const sf::Color& color, float factor);
     };
 
     float generateRandomNumber(float const &floor, float const &ceiling);

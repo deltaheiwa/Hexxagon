@@ -235,20 +235,56 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
     auto pressedTile = pressedTiles[0];
     auto tile = board->getTile(pressedTile);
     if (!tile.has_value()) {
-        fmt::println("Tile not found at ({}, {})", pressedTile.vertical, pressedTile.diagonal);
+        fmt::println("Tile not found at ({}, {})", pressedTile.diagonal, pressedTile.vertical);
         return;
     }
 
     auto tileStatus = tile.value()->getStatus();
-    fmt::println("Tile at ({}, {}) is {}", pressedTile.vertical, pressedTile.diagonal, tile.value()->getTileStatusString());
+    fmt::println("Tile at ({}, {}) is {}", pressedTile.diagonal, pressedTile.vertical, tile.value()->getTileStatusString());
+
+    auto playerOptional = board->getPlayer(board->getCurrentTurn());
+    if (playerOptional == std::nullopt) {
+        fmt::println("Player not found");
+        return;
+    }
+    auto player = playerOptional.value();
+
+    bool isHuman = player->getType() == PlayableSides::PlayerType::HUMAN;
+    bool isCurrentTurn = board->getCurrentTurn() + 1 == *tileStatus;
+
     if (*tileStatus == Tile::TileStatus::EMPTY) {
         fmt::println("Tile is empty");
-        // TODO: Implement move
+        if (player->hasSelectedCoordinate()) {
+            auto selectedCoordinate = player->getSelectedCoordinate();
+            auto oneStepAdjacentCoordinates = board->findAdjacentCoordinatesOneStep(*selectedCoordinate);
+            auto twoStepAdjacentCoordinates = board->findAdjacentCoordinatesTwoSteps(*selectedCoordinate);
+            bool isOneStep = std::find(
+                    oneStepAdjacentCoordinates.begin(),
+                    oneStepAdjacentCoordinates.end(),
+                    pressedTile
+                    ) != oneStepAdjacentCoordinates.end();
+            bool isTwoSteps = std::find(
+                    twoStepAdjacentCoordinates.begin(),
+                    twoStepAdjacentCoordinates.end(),
+                    pressedTile
+                    ) != twoStepAdjacentCoordinates.end();
+
+            if (!isOneStep && !isTwoSteps) {
+                board->removeSelectedHighlights();
+                player->clearSelectedCoordinate();
+                return;
+            }
+            auto side = player->getSide();
+            auto move = Move(selectedCoordinate, pressedTile, side, isOneStep);
+            GameManager::getInstance()->setBufferedMove(&move);
+        }
         return;
     }
 
-    if (board->getCurrentTurn() + 1 == *tileStatus) {
+
+    if (isCurrentTurn && isHuman) {
         fmt::println("Pressed tile is of the current turn");
+        player->setSelectedCoordinate(pressedTile);
     }
 
 }

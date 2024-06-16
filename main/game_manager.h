@@ -22,6 +22,15 @@ public:
     auto getWindow() -> std::shared_ptr<WindowWrapper>;
     auto getBoard() -> std::shared_ptr<Board>;
     auto createBoard() -> void;
+    auto performMove() -> void;
+
+    auto setBufferedMove(Move* move) -> void;
+    auto getBufferedMove() -> Move*;
+    auto clearBufferedMove() -> void;
+
+    auto setLastMove(Move* move) -> void;
+    auto getLastMove() -> Move*;
+    auto clearLastMove() -> void;
 
     auto run() -> void;
 private:
@@ -29,8 +38,9 @@ private:
     std::shared_ptr<WindowWrapper> window;
     std::shared_ptr<Board> board = nullptr;
 
-    std::string gameFenCode;
-    std::queue<std::pair<HexxagonUtil::Coordinate, HexxagonUtil::Coordinate>> gamePgnMoves;
+    Move* last_move = nullptr;
+
+    Move* buffered_move = nullptr;
 
     auto update() -> void;
 };

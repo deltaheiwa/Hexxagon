@@ -14,9 +14,9 @@ namespace Hexxagon {
         shape.setRadius(radius);
         shape.setRotation(90);
         shape.setOrigin(radius, radius);
-        shape.setFillColor(HexxagonUtil::CustomColors::DarkPurple);
         shape.setOutlineThickness(2);
-        shape.setOutlineColor(HexxagonUtil::CustomColors::PurplishPink);
+        setFillColor(HexxagonUtil::CustomColors::DarkPurple);
+        setOutlineColor(HexxagonUtil::CustomColors::PurplishPink);
     }
 
     auto Tile::getCoordinate() const -> HexxagonUtil::Coordinate {
@@ -46,5 +46,31 @@ namespace Hexxagon {
 
     void Tile::setStatus(Tile::TileStatus set_status) {
         this->status = set_status;
+    }
+
+    void Tile::setFillColor(sf::Color color) {
+        shape.setFillColor(color);
+        currentFillColor = color;
+    }
+
+    void Tile::setOutlineColor(sf::Color color) {
+        shape.setOutlineColor(color);
+        currentOutlineColor = color;
+    }
+
+    void Tile::highlightLastMove() {
+        shape.setFillColor(HexxagonUtil::CustomColors::lightenColor(HexxagonUtil::CustomColors::PurplishPink, 0.5));
+        shape.setOutlineColor(HexxagonUtil::CustomColors::lightenColor(HexxagonUtil::CustomColors::DarkPurple, 0.5));
+    }
+
+    void Tile::restoreColorsFromLastMove() {
+        shape.setFillColor(HexxagonUtil::CustomColors::DarkPurple);
+        shape.setOutlineColor(HexxagonUtil::CustomColors::PurplishPink);
+    }
+
+    void Tile::reset() {
+        shape.setFillColor(currentFillColor);
+        shape.setOutlineColor(currentOutlineColor);
+        shape.setOutlineThickness(2);
     }
 } // Hexxagon

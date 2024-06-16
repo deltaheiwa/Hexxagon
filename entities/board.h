@@ -8,6 +8,7 @@
 #include "../main/window_wrapper.h"
 #include "tile.h"
 #include "playable_sides.h"
+#include "move.h"
 
 namespace Hexxagon {
     class Board {
@@ -21,7 +22,7 @@ namespace Hexxagon {
         std::vector<std::shared_ptr<PlayableSides>> players;
 
         PlayableSides::Side current_turn = PlayableSides::Side::RUBIES;
-        // std::pair<Coordinate, Coordinate> last_move;
+
     public:
         Board() = default;
 
@@ -31,9 +32,15 @@ namespace Hexxagon {
 
         auto getSize() const -> short;
 
+        auto getPlayer(PlayableSides::Side side) -> std::optional<std::shared_ptr<PlayableSides>>;
+
         auto getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<Tile*>;
 
         auto getTiles() -> std::map<HexxagonUtil::Coordinate, Tile>*;
+
+        auto addPawn(HexxagonUtil::Coordinate const &coordinate, PlayableSides::Side side) -> void;
+
+        auto removePawn(HexxagonUtil::Coordinate const &coordinate) -> void;
 
         auto loadBoard() -> void;
 
@@ -50,10 +57,20 @@ namespace Hexxagon {
         sf::CircleShape getPawnShape(PlayableSides::Side const &side);
 
         auto getCurrentTurn() -> PlayableSides::Side;
+
+        auto findAdjacentCoordinatesOneStep(HexxagonUtil::Coordinate const &coordinate) -> std::vector<HexxagonUtil::Coordinate>;
+
+        auto findAdjacentCoordinatesTwoSteps(HexxagonUtil::Coordinate const &coordinate) -> std::vector<HexxagonUtil::Coordinate>;
+
+        auto removeSelectedHighlights() -> void;
     private:
         auto setTile(HexxagonUtil::Coordinate const &coordinate, Tile tile) -> Tile*;
 
         auto drawPawns(WindowWrapper &window) -> void;
+
+        auto highlightSetOfCoordinates(std::vector<HexxagonUtil::Coordinate> const &coordinates, sf::Color color) -> void;
+
+        auto highlightSelectedCoordinate() -> void;
 
         sf::CircleShape rubyShape;
         sf::CircleShape pearlShape;
