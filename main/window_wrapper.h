@@ -34,6 +34,7 @@ private:
         };
 
         enum LOAD_SELECT_MENU_BUTTON {
+            LOAD_GAME,
             BACK_LOAD,
             CYCLE_BACK_LOAD
         };
@@ -48,6 +49,8 @@ private:
         static START_SELECT_MENU_BUTTON selectedStartSelectMenuButton;
         static LOAD_SELECT_MENU_BUTTON selectedLoadSelectMenuButton;
         static MENU_LAYER currentLayer;
+
+        static int selectedSaveIndex;
     public:
         static auto getSelectedMainMenuButton() -> MAIN_MENU_BUTTON;
         static auto setSelectedMainMenuButton(MAIN_MENU_BUTTON const &button) -> void;
@@ -60,6 +63,11 @@ private:
 
         static auto getCurrentLayer() -> MENU_LAYER;
         static auto setCurrentLayer(MENU_LAYER const &layer) -> void;
+
+        static auto getSelectedSaveIndex() -> int;
+        static auto addOneToSelectedSaveIndex() -> void;
+        static auto subtractOneFromSelectedSaveIndex() -> void;
+
     };
 
     class PauseCache {

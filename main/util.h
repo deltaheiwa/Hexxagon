@@ -4,6 +4,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <filesystem>
 #include "SFML/Graphics/Color.hpp"
 
 namespace HexxagonUtil {
@@ -33,6 +34,8 @@ namespace HexxagonUtil {
     float generateRandomNumber(float const &floor, float const &ceiling);
 
     auto splitString(std::string const &str, char const &delimiter) -> std::vector<std::string>;
+
+    auto getFilesInDirectory(std::filesystem::path const &directoryPath) -> std::vector<std::filesystem::path>;
 }
 
 #endif //HEXAGON_UTIL_H

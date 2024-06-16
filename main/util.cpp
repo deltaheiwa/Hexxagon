@@ -1,8 +1,10 @@
 #include "util.h"
+#include "fmt/core.h"
 
 #include <random>
 #include <tuple>
 #include <sstream>
+#include <filesystem>
 
 namespace HexxagonUtil {
     bool Coordinate::operator<(const Coordinate &other) const {
@@ -46,5 +48,23 @@ namespace HexxagonUtil {
         }
 
         return parts;
+    }
+
+    std::vector<std::filesystem::path> getFilesInDirectory(const std::filesystem::path& directoryPath) {
+        std::vector<std::filesystem::path> files;
+
+        try {
+            for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+                if (std::filesystem::is_regular_file(entry.path())) {
+                    files.push_back(entry.path());
+                }
+            }
+        } catch (const std::filesystem::filesystem_error& e) {
+            fmt::println("Filesystem error: {}", e.what());
+        } catch (const std::exception& e) {
+            fmt::println("General error: {}\n", e.what());
+        }
+
+        return files;
     }
 }

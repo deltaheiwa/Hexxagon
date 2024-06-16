@@ -14,6 +14,7 @@ WindowWrapper::MenuCache::MAIN_MENU_BUTTON WindowWrapper::MenuCache::selectedMai
 WindowWrapper::MenuCache::START_SELECT_MENU_BUTTON WindowWrapper::MenuCache::selectedStartSelectMenuButton;
 WindowWrapper::MenuCache::LOAD_SELECT_MENU_BUTTON WindowWrapper::MenuCache::selectedLoadSelectMenuButton;
 WindowWrapper::MenuCache::MENU_LAYER WindowWrapper::MenuCache::currentLayer;
+int WindowWrapper::MenuCache::selectedSaveIndex = 0;
 
 WindowWrapper::PauseCache::PAUSE_BUTTON WindowWrapper::PauseCache::selectedPauseButton;
 std::string WindowWrapper::PauseCache::saveFileName = std::string();
@@ -201,6 +202,10 @@ void WindowWrapper::MenuEventHandler::handleStartSelectMenuKeyPressed(WindowWrap
 void WindowWrapper::MenuEventHandler::handleLoadSelectMenuKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) {
     if (key.code == sf::Keyboard::Enter) {
         switch (MenuCache::getSelectedLoadSelectMenuButton()) {
+            case MenuCache::LOAD_SELECT_MENU_BUTTON::LOAD_GAME:
+                GameManager::getInstance()->loadGameFromFile(HexxagonUtil::getFilesInDirectory(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH"))[MenuCache::getSelectedSaveIndex()].filename().string());
+                window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                break;
             case MenuCache::LOAD_SELECT_MENU_BUTTON::BACK_LOAD:
                 MenuCache::setCurrentLayer(MenuCache::MENU_LAYER::MAIN);
                 break;
@@ -213,6 +218,16 @@ void WindowWrapper::MenuEventHandler::handleLoadSelectMenuKeyPressed(WindowWrapp
                 (MenuCache::LOAD_SELECT_MENU_BUTTON)
                 ((MenuCache::getSelectedLoadSelectMenuButton() + 1 * (direction)) % MenuCache::LOAD_SELECT_MENU_BUTTON::CYCLE_BACK_LOAD)
                 );
+    } else if (key.code == sf::Keyboard::Left) {
+        if (MenuCache::getSelectedSaveIndex() == 0) {
+            return;
+        }
+        MenuCache::subtractOneFromSelectedSaveIndex();
+    } else if (key.code == sf::Keyboard::Right) {
+        if (MenuCache::getSelectedSaveIndex() == HexxagonUtil::getFilesInDirectory(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH")).size() - 1) {
+            return;
+        }
+        MenuCache::addOneToSelectedSaveIndex();
     }
 }
 
@@ -483,9 +498,63 @@ void WindowWrapper::drawStartSelectMenu(sf::Font &font) {
 
 void WindowWrapper::drawLoadSelectMenu(sf::Font &font) {
     static sf::Vector2f arrowPosition;
-    // TODO: Implement load select menu
+
+    auto saveFiles = HexxagonUtil::getFilesInDirectory(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH"));
+    std::vector<sf::Text> saveTexts;
+    for (auto &saveFile : saveFiles) {
+        sf::Text text(saveFile.filename().string(), font, 50);
+        saveTexts.push_back(text);
+    }
+
+    auto selectedSaveIndex = MenuCache::getSelectedSaveIndex();
+
+    sf::Text arrowSelectLeft("<", font, 50);
+    arrowSelectLeft.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    draw(arrowSelectLeft);
+
+    saveTexts[selectedSaveIndex].setPosition((float)(windowWidth/4 + 30), (float)(windowHeight - windowHeightPartition*12));
+    draw(saveTexts[selectedSaveIndex]);
+
+    sf::Text arrowSelectRight(">", font, 50);
+    arrowSelectRight.setPosition((float)(windowWidth/4 + 60 + saveTexts[selectedSaveIndex].getGlobalBounds().width), (float)(windowHeight - windowHeightPartition*12));
+    draw(arrowSelectRight);
+
+
     sf::Text backText("Back", font, 50);
+    backText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    draw(backText);
+
+    auto mousePosition = getMousePosition();
+
+    if (isMouseOverButton(mousePosition, backText)) {
+        MenuCache::setSelectedLoadSelectMenuButton(MenuCache::LOAD_SELECT_MENU_BUTTON::BACK_LOAD);
+    } else if (
+            isMouseOverButton(mousePosition, arrowSelectLeft) ||
+            isMouseOverButton(mousePosition, arrowSelectRight) ||
+            isMouseOverButton(mousePosition, saveTexts[selectedSaveIndex])
+            ) {
+        MenuCache::setSelectedLoadSelectMenuButton(MenuCache::LOAD_SELECT_MENU_BUTTON::LOAD_GAME);
+    }
+
+
+    switch (MenuCache::getSelectedLoadSelectMenuButton()) {
+        case MenuCache::LOAD_SELECT_MENU_BUTTON::LOAD_GAME:
+            arrowPosition = arrowSelectLeft.getPosition();
+            arrowPosition.x -= 50;
+            break;
+        case MenuCache::LOAD_SELECT_MENU_BUTTON::BACK_LOAD:
+            arrowPosition = backText.getPosition();
+            arrowPosition.x -= 50;
+            break;
+        default:
+            break;
+    }
+
+    sf::Text selectArrow(">", font, 50);
+    selectArrow.setPosition(arrowPosition.x, arrowPosition.y);
+    if (arrowPosition != sf::Vector2f(0, 0)) draw(selectArrow);
 }
+
 
 void WindowWrapper::handleInGame() {
     GameManager::getInstance()->getBoard()->drawBoard(*this);
@@ -576,6 +645,9 @@ auto WindowWrapper::PauseEventHandler::handlePauseEvent(WindowWrapper* window, s
                     window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
                     break;
                 case PauseCache::PAUSE_BUTTON::SAVE:
+                    if (inputText.empty()) {
+                        break;
+                    }
                     GameManager::getInstance()->saveGameToFile(inputText + ".hex");
                     window->setState(WindowWrapper::WINDOW_STATE::MENU);
                     break;
@@ -606,4 +678,16 @@ auto WindowWrapper::PauseCache::setSelectedPauseButton(PAUSE_BUTTON const &butto
 
 auto WindowWrapper::PauseCache::getSaveFileName() -> std::string& {
     return saveFileName;
+}
+
+auto WindowWrapper::MenuCache::getSelectedSaveIndex() -> int {
+    return selectedSaveIndex;
+}
+
+auto WindowWrapper::MenuCache::addOneToSelectedSaveIndex() -> void {
+    selectedSaveIndex++;
+}
+
+auto WindowWrapper::MenuCache::subtractOneFromSelectedSaveIndex() -> void {
+    selectedSaveIndex--;
 }

@@ -49,6 +49,7 @@ public:
     auto run() -> void;
 
     auto saveGameToFile(std::string const &filename) -> void;
+    auto loadGameFromFile(std::string const &filename) -> void;
 private:
     GameManager();
     std::shared_ptr<WindowWrapper> window;

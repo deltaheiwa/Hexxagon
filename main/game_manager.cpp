@@ -129,3 +129,17 @@ auto GameManager::saveGameToFile(std::string const &filename) -> void {
         file.close();
     }
 }
+
+auto GameManager::loadGameFromFile(std::string const &filename) -> void {
+    auto filePath = getConstant<std::filesystem::path>("HEXXAGON_PATH") / filename;
+    fmt::print("Loading game from {}\n", filePath.string());
+    std::ifstream file(filePath);
+    if (file.is_open()) {
+        std::string fen;
+        std::getline(file, fen);
+        board = BoardBuilder().buildFromFen(fen);
+        board->structureShapes();
+        board->drawBoard(*window);
+        file.close();
+    }
+}
