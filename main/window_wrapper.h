@@ -62,6 +62,24 @@ private:
         static auto setCurrentLayer(MENU_LAYER const &layer) -> void;
     };
 
+    class PauseCache {
+    public:
+        enum PAUSE_BUTTON {
+            RESUME,
+            SAVE,
+            MAIN_MENU,
+            CYCLE_BACK_PAUSE
+        };
+
+        static PAUSE_BUTTON selectedPauseButton;
+        static std::string saveFileName;
+
+        static auto getSelectedPauseButton() -> PAUSE_BUTTON;
+        static auto setSelectedPauseButton(PAUSE_BUTTON const &button) -> void;
+
+        static auto getSaveFileName() -> std::string&;
+    };
+
     class MenuEventHandler {
     public:
         static auto handleMainMenuKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) -> void;
@@ -73,6 +91,11 @@ private:
     public:
         static auto handleInGameKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) -> void;
         static auto handleInGameMousePressed(WindowWrapper* window, sf::Event::MouseButtonEvent mouse) -> void;
+    };
+
+    class PauseEventHandler {
+    public:
+        static auto handlePauseEvent(WindowWrapper* window, sf::Event event) -> void;
     };
 
     void loadIcon();

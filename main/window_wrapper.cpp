@@ -4,6 +4,7 @@
 #include "SFML/Graphics.hpp"
 #include "SFML/Window.hpp"
 #include "fmt/core.h"
+#include "fmt/ranges.h"
 #include "../entities/board.h"
 #include "game_manager.h"
 
@@ -13,6 +14,9 @@ WindowWrapper::MenuCache::MAIN_MENU_BUTTON WindowWrapper::MenuCache::selectedMai
 WindowWrapper::MenuCache::START_SELECT_MENU_BUTTON WindowWrapper::MenuCache::selectedStartSelectMenuButton;
 WindowWrapper::MenuCache::LOAD_SELECT_MENU_BUTTON WindowWrapper::MenuCache::selectedLoadSelectMenuButton;
 WindowWrapper::MenuCache::MENU_LAYER WindowWrapper::MenuCache::currentLayer;
+
+WindowWrapper::PauseCache::PAUSE_BUTTON WindowWrapper::PauseCache::selectedPauseButton;
+std::string WindowWrapper::PauseCache::saveFileName = std::string();
 
 WindowWrapper::WindowWrapper(
         sf::VideoMode mode,
@@ -316,6 +320,7 @@ void WindowWrapper::processEvents() {
                         GameEventHandler::handleInGameKeyPressed(this, event.key);
                         break;
                     case WINDOW_STATE::PAUSED:
+                        PauseEventHandler::handlePauseEvent(this, event);
                         break;
                 }
                 break;
@@ -327,6 +332,17 @@ void WindowWrapper::processEvents() {
                         GameEventHandler::handleInGameMousePressed(this, event.mouseButton);
                         break;
                     case WINDOW_STATE::PAUSED:
+                        break;
+                }
+                break;
+            case sf::Event::TextEntered:
+                switch (state) {
+                    case WINDOW_STATE::MENU:
+                        break;
+                    case WINDOW_STATE::IN_GAME:
+                        break;
+                    case WINDOW_STATE::PAUSED:
+                        PauseEventHandler::handlePauseEvent(this, event);
                         break;
                 }
                 break;
@@ -476,5 +492,118 @@ void WindowWrapper::handleInGame() {
 }
 
 void WindowWrapper::handlePause() {
+    sf::Font font = loadFont();
 
+    sf::Text titleText("Hexxagon", font, 100);
+    titleText.setPosition((float)(windowWidth/2.5), (float)(windowHeight/windowHeightPartition));
+    draw(titleText);
+
+    static sf::Vector2f arrowPosition;
+
+    sf::Text resumeText("Resume", font, 50);
+    resumeText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    draw(resumeText);
+
+    sf::Text saveText("Save Game", font, 50);
+    saveText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*11));
+    draw(saveText);
+
+    auto inputString = PauseCache::getSaveFileName();
+    sf::Text saveGameInput;
+    saveGameInput.setString(inputString);
+    saveGameInput.setFont(font);
+    saveGameInput.setCharacterSize(50);
+    saveGameInput.setPosition((float)(windowWidth/4 + 200), (float)(windowHeight - windowHeightPartition*11));
+    draw(saveGameInput);
+
+    sf::Text quitText("Quit", font, 50);
+    quitText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    draw(quitText);
+
+    auto mousePosition = getMousePosition();
+
+    if (isMouseOverButton(mousePosition, resumeText)) {
+        PauseCache::setSelectedPauseButton(PauseCache::PAUSE_BUTTON::RESUME);
+    } else if (isMouseOverButton(mousePosition, saveText)) {
+        PauseCache::setSelectedPauseButton(PauseCache::PAUSE_BUTTON::SAVE);
+    } else if (isMouseOverButton(mousePosition, quitText)) {
+        PauseCache::setSelectedPauseButton(PauseCache::PAUSE_BUTTON::MAIN_MENU);
+    }
+
+    sf::Vector2f resumePos;
+    sf::Vector2f savePos;
+    sf::Vector2f quitPos;
+
+    switch (PauseCache::getSelectedPauseButton()) {
+        case PauseCache::PAUSE_BUTTON::RESUME:
+            resumePos = resumeText.getPosition();
+            arrowPosition = {resumePos.x - 50, resumePos.y};
+            break;
+        case PauseCache::PAUSE_BUTTON::SAVE:
+            savePos = saveText.getPosition();
+            arrowPosition = {savePos.x - 50, savePos.y};
+            break;
+        case PauseCache::PAUSE_BUTTON::MAIN_MENU:
+            quitPos = quitText.getPosition();
+            arrowPosition = {quitPos.x - 50, quitPos.y};
+            break;
+        default:
+            break;
+    }
+
+    sf::Text selectArrow(">", font, 50);
+    selectArrow.setPosition(arrowPosition.x, arrowPosition.y);
+    if (arrowPosition != sf::Vector2f(0, 0)) draw(selectArrow);
+}
+
+auto WindowWrapper::PauseEventHandler::handlePauseEvent(WindowWrapper* window, sf::Event event) -> void {
+    auto& inputText = PauseCache::getSaveFileName();
+    if (event.type == sf::Event::TextEntered)
+    {
+        if (event.text.unicode < 128) {
+            auto enteredChar = static_cast<char>(event.text.unicode);
+
+            if (enteredChar == 8 && !inputText.empty()) { // Backspace
+                inputText.pop_back();
+            } else if (enteredChar >= 32) {
+                inputText += enteredChar;
+            }
+        }
+    } else if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::Enter) {
+            switch (PauseCache::getSelectedPauseButton()) {
+                case PauseCache::PAUSE_BUTTON::RESUME:
+                    window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                    break;
+                case PauseCache::PAUSE_BUTTON::SAVE:
+                    GameManager::getInstance()->saveGameToFile(inputText + ".hex");
+                    window->setState(WindowWrapper::WINDOW_STATE::MENU);
+                    break;
+                case PauseCache::PAUSE_BUTTON::MAIN_MENU:
+                    window->setState(WindowWrapper::WINDOW_STATE::MENU);
+                    break;
+                case PauseCache::PAUSE_BUTTON::CYCLE_BACK_PAUSE:
+                    break;
+            }
+        } else if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Down) {
+            short direction = event.key.code == sf::Keyboard::Up ? -1 : 1;
+            PauseCache::setSelectedPauseButton(
+                    (PauseCache::PAUSE_BUTTON)
+                            ((PauseCache::getSelectedPauseButton() + 1 * (direction)) %
+                             PauseCache::PAUSE_BUTTON::CYCLE_BACK_PAUSE)
+            );
+        }
+    }
+}
+
+auto WindowWrapper::PauseCache::getSelectedPauseButton() -> PAUSE_BUTTON {
+    return selectedPauseButton;
+}
+
+auto WindowWrapper::PauseCache::setSelectedPauseButton(PAUSE_BUTTON const &button) -> void {
+    selectedPauseButton = button;
+}
+
+auto WindowWrapper::PauseCache::getSaveFileName() -> std::string& {
+    return saveFileName;
 }

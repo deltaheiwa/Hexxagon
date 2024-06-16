@@ -2,6 +2,7 @@
 #define HEXAGON_GAME_MANAGER_H
 
 #include <queue>
+#include <unordered_map>
 #include "util.h"
 #include "window_wrapper.h"
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -12,12 +13,25 @@ namespace Hexxagon {
 }
 
 class Hexxagon::GameManager final {
+private:
+    template<typename P>
+    static std::unordered_map<std::string, const P> CONSTANTS;
 public:
     auto operator=(const GameManager&) = delete;
     GameManager(GameManager &other_instance) = delete;
     ~GameManager() = delete;
 
     static GameManager* getInstance();
+
+    template<typename T>
+    static auto addConstant(std::string const &constant_name, T constantVariable) -> void {
+        CONSTANTS<T>.insert({constant_name, constantVariable});
+    }
+
+    template<typename T>
+    static auto getConstant(std::string const &constant_name) -> const auto& {
+        return CONSTANTS<T>[constant_name];
+    }
 
     auto getWindow() -> std::shared_ptr<WindowWrapper>;
     auto getBoard() -> std::shared_ptr<Board>;
@@ -33,6 +47,8 @@ public:
     auto clearLastMove() -> void;
 
     auto run() -> void;
+
+    auto saveGameToFile(std::string const &filename) -> void;
 private:
     GameManager();
     std::shared_ptr<WindowWrapper> window;
@@ -44,5 +60,8 @@ private:
 
     auto update() -> void;
 };
+
+template<typename P>
+std::unordered_map<std::string, const P> Hexxagon::GameManager::CONSTANTS;
 
 #endif //HEXAGON_GAME_MANAGER_H

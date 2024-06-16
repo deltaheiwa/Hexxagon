@@ -1,3 +1,7 @@
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+
 #include "game_manager.h"
 #include "../entities/player.h"
 #include "../entities/ai.h"
@@ -6,6 +10,7 @@
 #include "fmt/core.h"
 
 using namespace Hexxagon;
+
 
 GameManager::GameManager() : window(std::make_shared<WindowWrapper>(sf::VideoMode(1600, 900), "Hexxagon", WindowWrapper::WINDOW_STATE::MENU)), board(nullptr){
     window->setFramerateLimit(60);
@@ -108,4 +113,19 @@ auto GameManager::update() -> void {
         createBoard();
     }
     performMove();
+}
+
+auto GameManager::saveGameToFile(std::string const &filename) -> void {
+    if (board == nullptr) {
+        return;
+    }
+    auto boardFen = board->getFen();
+    auto filePath = getConstant<std::filesystem::path>("HEXXAGON_PATH") / filename;
+    fmt::print("Saving game to {}\n", filePath.string());
+    std::ofstream file(filePath, std::ios::trunc);
+
+    if (file.is_open()) {
+        file << boardFen;
+        file.close();
+    }
 }
