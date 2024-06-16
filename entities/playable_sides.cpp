@@ -31,17 +31,17 @@ namespace Hexxagon {
     auto Player::setSelectedCoordinate(HexxagonUtil::Coordinate const &coordinate) -> void {
         auto currentlySelectedCoordinate = getSelectedCoordinate();
         if (currentlySelectedCoordinate != nullptr) {
-            GameManager::getInstance()->getBoard()->getTile(*currentlySelectedCoordinate).value()->reset();
+            const_cast<Tile *>(GameManager::getInstance()->getBoard()->getTile(*currentlySelectedCoordinate).value())->reset();
             for (auto &adjacentCoordinate : GameManager::getInstance()->getBoard()->findAdjacentCoordinatesOneStep(*currentlySelectedCoordinate)) {
                 auto adjacentTile = GameManager::getInstance()->getBoard()->getTile(adjacentCoordinate);
                 if (adjacentTile.has_value()) {
-                    adjacentTile.value()->reset();
+                    const_cast<Tile *>(adjacentTile.value())->reset();
                 }
             }
             for (auto &adjacentCoordinateTwoSteps : GameManager::getInstance()->getBoard()->findAdjacentCoordinatesTwoSteps(*currentlySelectedCoordinate)) {
                 auto adjacentTile = GameManager::getInstance()->getBoard()->getTile(adjacentCoordinateTwoSteps);
                 if (adjacentTile.has_value()) {
-                    adjacentTile.value()->reset();
+                    const_cast<Tile *>(adjacentTile.value())->reset();
                 }
             }
         }

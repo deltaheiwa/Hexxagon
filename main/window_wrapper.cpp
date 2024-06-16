@@ -259,7 +259,7 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
     }
 
     auto tileStatus = tile.value()->getStatus();
-    fmt::println("Tile at ({}, {}) is {}", pressedTile.diagonal, pressedTile.vertical, tile.value()->getTileStatusString());
+    fmt::println("Tile at ({}, {}) is {}", pressedTile.diagonal, pressedTile.vertical, const_cast<Tile *>(tile.value())->getTileStatusString());
 
     auto playerOptional = board->getPlayer(board->getCurrentTurn());
     if (playerOptional == std::nullopt) {
@@ -269,9 +269,9 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
     auto player = playerOptional.value();
 
     bool isHuman = player->getType() == PlayableSides::PlayerType::HUMAN;
-    bool isCurrentTurn = board->getCurrentTurn() + 1 == *tileStatus;
+    bool isCurrentTurn = board->getCurrentTurn() + 1 == tileStatus;
 
-    if (*tileStatus == Tile::TileStatus::EMPTY) {
+    if (tileStatus == Tile::TileStatus::EMPTY) {
         fmt::println("Tile is empty");
         if (player->hasSelectedCoordinate()) {
             auto selectedCoordinate = player->getSelectedCoordinate();

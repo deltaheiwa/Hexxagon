@@ -34,7 +34,7 @@ namespace Hexxagon {
 
         auto getPlayer(PlayableSides::Side side) -> std::optional<std::shared_ptr<PlayableSides>>;
 
-        auto getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<Tile*>;
+        auto getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<const Tile*>;
 
         auto getTiles() -> std::map<HexxagonUtil::Coordinate, Tile>*;
 
@@ -69,6 +69,8 @@ namespace Hexxagon {
         auto findAdjacentCoordinatesTwoSteps(HexxagonUtil::Coordinate const &coordinate) -> std::vector<HexxagonUtil::Coordinate>;
 
         auto removeSelectedHighlights() -> void;
+
+        auto isNoEmptyTiles() const -> bool;
     private:
         auto setTile(HexxagonUtil::Coordinate const &coordinate, Tile tile) -> Tile*;
 

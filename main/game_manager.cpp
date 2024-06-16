@@ -72,7 +72,9 @@ auto GameManager::performMove() -> void {
 
     board->convertPawns(buffered_move->getTo(), buffered_move->getSide());
 
-
+    /*if (board->isNoEmptyTiles()) {
+        fmt::print("No empty tiles\n");
+    }*/
 
     board->switchTurn();
     // setLastMove(buffered_move);

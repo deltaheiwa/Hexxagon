@@ -45,7 +45,7 @@ namespace Hexxagon {
 
         float getRadius() const;
 
-        auto getStatus() -> TileStatus*;
+        auto getStatus() const -> TileStatus;
 
         auto getShape() -> sf::CircleShape*;
 

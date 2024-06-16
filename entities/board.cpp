@@ -18,12 +18,13 @@ namespace Hexxagon {
         return size;
     }
 
-    auto Board::getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<Tile*> {
+    auto Board::getTile(HexxagonUtil::Coordinate const &coordinate) const -> std::optional<const Tile*> {
         // https://en.cppreference.com/w/cpp/utility/optional
-        if (!tiles.contains(coordinate)) {
+        auto it = tiles.find(coordinate);
+        if (it == tiles.end()) {
             return std::nullopt;
         }
-        return const_cast<Tile*>(&tiles.at(coordinate));
+        return &it->second;
     }
 
     auto Board::setTile(const HexxagonUtil::Coordinate &coordinate, Tile tile) -> Tile* {
@@ -64,7 +65,8 @@ namespace Hexxagon {
     auto Board::addPawn(HexxagonUtil::Coordinate const &coordinate, PlayableSides::Side side) -> void {
         auto tile = getTile(coordinate);
         if (tile.has_value()) {
-            tile.value()->setStatus(side == PlayableSides::Side::RUBIES ? Tile::RUBY : Tile::PEARL);
+            Tile *tileValue = const_cast<Tile *>(tile.value());
+            tileValue->setStatus(side == PlayableSides::Side::RUBIES ? Tile::RUBY : Tile::PEARL);
             players[side == PlayableSides::Side::RUBIES ? 0 : 1]->addOccupiedCoordinate(coordinate);
         }
     }
@@ -74,12 +76,12 @@ namespace Hexxagon {
         for (auto adjacentCoordinate : adjacentCoordinates) {
             auto tile = getTile(adjacentCoordinate);
             if (tile.has_value()) {
-                auto tileStatus = *tile.value()->getStatus();
+                auto tileStatus = tile.value()->getStatus();
                 if (tileStatus == Tile::EMPTY) {
                     continue;
                 }
                 if (tileStatus == (side == PlayableSides::Side::RUBIES ? Tile::PEARL : Tile::RUBY)) {
-                    tile.value()->setStatus(side == PlayableSides::Side::RUBIES ? Tile::RUBY : Tile::PEARL);
+                    const_cast<Tile *>(tile.value())->setStatus(side == PlayableSides::Side::RUBIES ? Tile::RUBY : Tile::PEARL);
                 }
             }
         }
@@ -88,7 +90,7 @@ namespace Hexxagon {
     auto Board::removePawn(HexxagonUtil::Coordinate const &coordinate) -> void {
         auto tile = getTile(coordinate);
         if (tile.has_value()) {
-            tile.value()->setStatus(Tile::EMPTY);
+            const_cast<Tile *>(tile.value())->setStatus(Tile::EMPTY);
             players[0]->removeOccupiedCoordinate(coordinate);
             players[1]->removeOccupiedCoordinate(coordinate);
         }
@@ -112,7 +114,7 @@ namespace Hexxagon {
                 } else if (c == 'r' || c == 'p') {
                     auto tile = getTile({x, y});
                     if (tile.has_value()) {
-                        tile.value()->setStatus(c == 'r' ? Tile::RUBY : Tile::PEARL);
+                        const_cast<Tile *>(tile.value())->setStatus(c == 'r' ? Tile::RUBY : Tile::PEARL);
                         c == 'r' ? player1->addOccupiedCoordinate({x, y}) : player2->addOccupiedCoordinate({x, y});
                     }
                     fmt::println("Setting tile at ({}, {}) to {}", x, y, c == 'r' ? "RUBY" : "PEARL");
@@ -134,7 +136,7 @@ namespace Hexxagon {
             for (int diag = diagStart; diag <= diagEnd; diag++) {
                 auto tile = getTile({diag, vert});
                 if (tile.has_value()) {
-                    auto tileStatus = *tile.value()->getStatus();
+                    auto tileStatus = const_cast<Tile *>(tile.value())->getStatus();
                     if (tileStatus == Tile::EMPTY) {
                         emptyCount++;
                     } else {
@@ -163,6 +165,21 @@ namespace Hexxagon {
     auto Board::loadStartingPosition() -> void {
         parseFen(starting_position);
     }
+
+    auto Board::isNoEmptyTiles() const -> bool {
+        for (int vert = -size; vert <= size; vert++) {
+            int diagStart = (vert <= 0) ? -size : -size + vert;
+            int diagEnd = (vert > 0) ? size : size - vert;
+            for (int diag = diagStart; diag <= diagEnd; diag++) {
+                auto tile = getTile({diag, vert});
+                if (tile != nullptr && const_cast<Tile *>(tile.value())->getStatus() == Tile::EMPTY) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     void Board::structureShapes() {
         // Ruby shape
         rubyShape.setFillColor(sf::Color::Red);
@@ -263,8 +280,8 @@ namespace Hexxagon {
         for (auto coordinate : coordinates) {
             auto tile = getTile(coordinate);
             if (tile.has_value()) {
-                if (*tile.value()->getStatus() == Tile::EMPTY) {
-                    auto tileShape = tile.value()->getShape();
+                if (const_cast<Tile *>(tile.value())->getStatus() == Tile::EMPTY) {
+                    auto tileShape = const_cast<Tile *>(tile.value())->getShape();
                     tileShape->setOutlineColor(color);
                     tileShape->setOutlineThickness(5);
                 }
@@ -284,7 +301,7 @@ namespace Hexxagon {
         }
         auto tile = getTile(*selectedCoordinate);
         if (tile.has_value()) {
-            auto tileShape = tile.value()->getShape();
+            auto tileShape = const_cast<Tile *>(tile.value())->getShape();
             tileShape->setOutlineColor(HexxagonUtil::CustomColors::Teal);
             tileShape->setOutlineThickness(5);
         }
@@ -300,18 +317,18 @@ namespace Hexxagon {
         if (selectedCoordinate != nullptr) {
             auto tile = getTile(*selectedCoordinate);
             if (tile.has_value()) {
-                tile.value()->reset();
+                const_cast<Tile *>(tile.value())->reset();
             }
             for (auto &adjacentCoordinate : findAdjacentCoordinatesOneStep(*selectedCoordinate)) {
                 auto adjacentTile = getTile(adjacentCoordinate);
                 if (adjacentTile.has_value()) {
-                    adjacentTile.value()->reset();
+                    const_cast<Tile *>(adjacentTile.value())->reset();
                 }
             }
             for (auto &adjacentCoordinateTwoSteps : findAdjacentCoordinatesTwoSteps(*selectedCoordinate)) {
                 auto adjacentTile = getTile(adjacentCoordinateTwoSteps);
                 if (adjacentTile.has_value()) {
-                    adjacentTile.value()->reset();
+                    const_cast<Tile *>(adjacentTile.value())->reset();
                 }
             }
         }
@@ -319,7 +336,7 @@ namespace Hexxagon {
 
     auto Board::drawPawns(Hexxagon::WindowWrapper &window) -> void {
         for (auto& tile : tiles) {
-            auto tileStatus = *tile.second.getStatus();
+            auto tileStatus = tile.second.getStatus();
             if (tileStatus == Tile::EMPTY) {
                 continue;
             }

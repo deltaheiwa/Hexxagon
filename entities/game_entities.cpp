@@ -31,8 +31,8 @@ namespace Hexxagon {
         return &shape;
     }
 
-    auto Tile::getStatus() -> Tile::TileStatus* {
-        return &status;
+    auto Tile::getStatus() const -> Tile::TileStatus {
+        return status;
     }
 
     auto Tile::getPixelPosition() const -> std::pair<float, float> {
