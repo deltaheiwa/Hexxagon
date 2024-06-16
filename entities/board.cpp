@@ -12,7 +12,7 @@
 
 namespace Hexxagon {
     bool Board::is_against_ai = false;
-    std::string Board::starting_position = "r3p/6/7/8/p7r/8/7/6/r3p r a";
+    std::string Board::starting_position = "r3p/6/7/8/p7r/8/7/6/r3p r";
 
     auto Board::getSize() const -> short {
         return size;
@@ -97,7 +97,6 @@ namespace Hexxagon {
     auto Board::parseFen(std::string const &fen) -> void {
         auto gameInfo = HexxagonUtil::splitString(fen, ' ');
         auto currentTurn = gameInfo[1];
-        auto isAI = gameInfo[2];
         auto columns = HexxagonUtil::splitString(gameInfo[0], '/');
         auto player1 = players[0];
         auto player2 = players[1];

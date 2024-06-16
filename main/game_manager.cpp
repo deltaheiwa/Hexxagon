@@ -53,26 +53,6 @@ auto GameManager::clearLastMove() -> void {
     last_move = nullptr;
 }
 
-auto GameManager::createBoard() -> void {
-    if (board != nullptr) {
-        return;
-    }
-    fmt::println("Creating board");
-    std::shared_ptr<PlayableSides> player1 = std::make_shared<Player>(PlayableSides::RUBIES);
-    std::shared_ptr<PlayableSides> player2;
-    if (Board::getGameMode()) player2 = std::make_shared<AI>(PlayableSides::PEARLS);
-    else player2 = std::make_shared<Player>(PlayableSides::PEARLS);
-    this->board = BoardBuilder()
-            .setSize(4)
-            .addPlayer(std::move(player1))
-            .addPlayer(std::move(player2))
-            .build();
-    board->structureShapes();
-    board->loadBoard({{-1, 0},{0, -1},{1, 1}});
-    board->loadStartingPosition();
-    board->drawBoard(*window);
-}
-
 auto GameManager::performMove() -> void {
     if (buffered_move == nullptr) {
         return;
@@ -83,7 +63,7 @@ auto GameManager::performMove() -> void {
     }
     auto player = playerOptional.value();
 
-    // TODO: Implement move validation.
+
 
     board->addPawn(buffered_move->getTo(), buffered_move->getSide());
     if (!buffered_move->isCopy()) {
@@ -91,6 +71,8 @@ auto GameManager::performMove() -> void {
     }
 
     board->convertPawns(buffered_move->getTo(), buffered_move->getSide());
+
+
 
     board->switchTurn();
     // setLastMove(buffered_move);
@@ -130,6 +112,26 @@ auto GameManager::saveGameToFile(std::string const &filename) -> void {
     }
 }
 
+auto GameManager::createBoard() -> void {
+    if (board != nullptr) {
+        return;
+    }
+    fmt::println("Creating board");
+    std::shared_ptr<PlayableSides> player1 = std::make_shared<Player>(PlayableSides::RUBIES);
+    std::shared_ptr<PlayableSides> player2;
+    if (Board::getGameMode()) player2 = std::make_shared<AI>(PlayableSides::PEARLS);
+    else player2 = std::make_shared<Player>(PlayableSides::PEARLS);
+    this->board = BoardBuilder()
+            .setSize(4)
+            .addPlayer(std::move(player1))
+            .addPlayer(std::move(player2))
+            .build();
+    board->structureShapes();
+    board->loadBoard({{-1, 0},{0, -1},{1, 1}});
+    board->loadStartingPosition();
+    board->drawBoard(*window);
+}
+
 auto GameManager::loadGameFromFile(std::string const &filename) -> void {
     auto filePath = getConstant<std::filesystem::path>("HEXXAGON_PATH") / filename;
     fmt::print("Loading game from {}\n", filePath.string());
@@ -137,9 +139,17 @@ auto GameManager::loadGameFromFile(std::string const &filename) -> void {
     if (file.is_open()) {
         std::string fen;
         std::getline(file, fen);
-        board = BoardBuilder().buildFromFen(fen);
+
+        board = BoardBuilder()
+                .setSize(4)
+                .addPlayer(std::make_shared<Player>(PlayableSides::RUBIES))
+                .addPlayer(std::make_shared<Player>(PlayableSides::PEARLS))
+                .build();
         board->structureShapes();
+        board->loadBoard({{-1, 0},{0, -1},{1, 1}});
+        board->parseFen(fen);
         board->drawBoard(*window);
+
         file.close();
     }
 }
