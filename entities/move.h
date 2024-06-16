@@ -30,7 +30,7 @@ namespace Hexxagon {
 
         auto isCopy() const -> bool;
 
-
+        auto toStr() const -> std::string;
 
         auto getValue() const -> int;
 

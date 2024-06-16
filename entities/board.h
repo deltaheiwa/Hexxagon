@@ -40,9 +40,11 @@ namespace Hexxagon {
 
         auto addPawn(HexxagonUtil::Coordinate const &coordinate, PlayableSides::Side side) -> void;
 
+        auto convertPawns(HexxagonUtil::Coordinate const &coordinate, PlayableSides::Side side) -> void;
+
         auto removePawn(HexxagonUtil::Coordinate const &coordinate) -> void;
 
-        auto loadBoard() -> void;
+        auto loadBoard(std::vector<HexxagonUtil::Coordinate> const &excluded) -> void;
 
         auto drawBoard(WindowWrapper &window) -> void;
 
@@ -50,9 +52,13 @@ namespace Hexxagon {
 
         void parseFen(std::string const &fen);
 
+        auto getFen() -> std::string;
+
         void structureShapes();
 
         auto clearBoard() -> void;
+
+        void switchTurn();
 
         sf::CircleShape getPawnShape(PlayableSides::Side const &side);
 
@@ -75,6 +81,7 @@ namespace Hexxagon {
         sf::CircleShape rubyShape;
         sf::CircleShape pearlShape;
         static constexpr float pawnRadius = 20.0f;
+        std::vector<HexxagonUtil::Coordinate> excludedCoordinates = {};
     };
 
     class BoardBuilder {

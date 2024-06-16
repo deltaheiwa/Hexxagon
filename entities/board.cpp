@@ -12,7 +12,7 @@
 
 namespace Hexxagon {
     bool Board::is_against_ai = false;
-    std::string Board::starting_position = "r1p1p/6/7/8/p3r3r/8/7/6/r3p";
+    std::string Board::starting_position = "r3p/6/7/8/p7r/8/7/6/r3p r";
 
     auto Board::getSize() const -> short {
         return size;
@@ -47,6 +47,10 @@ namespace Hexxagon {
         return current_turn;
     }
 
+    void Board::switchTurn() {
+        current_turn = current_turn == PlayableSides::Side::RUBIES ? PlayableSides::Side::PEARLS : PlayableSides::Side::RUBIES;
+    }
+
     auto Board::getPlayer(PlayableSides::Side side) -> std::optional<std::shared_ptr<PlayableSides>> {
         for (auto player : players) {
             auto playerSide = player->getSide();
@@ -65,6 +69,22 @@ namespace Hexxagon {
         }
     }
 
+    auto Board::convertPawns(HexxagonUtil::Coordinate const &coordinate, PlayableSides::Side side) -> void {
+        auto adjacentCoordinates = findAdjacentCoordinatesOneStep(coordinate);
+        for (auto adjacentCoordinate : adjacentCoordinates) {
+            auto tile = getTile(adjacentCoordinate);
+            if (tile.has_value()) {
+                auto tileStatus = *tile.value()->getStatus();
+                if (tileStatus == Tile::EMPTY) {
+                    continue;
+                }
+                if (tileStatus == (side == PlayableSides::Side::RUBIES ? Tile::PEARL : Tile::RUBY)) {
+                    tile.value()->setStatus(side == PlayableSides::Side::RUBIES ? Tile::RUBY : Tile::PEARL);
+                }
+            }
+        }
+    }
+
     auto Board::removePawn(HexxagonUtil::Coordinate const &coordinate) -> void {
         auto tile = getTile(coordinate);
         if (tile.has_value()) {
@@ -75,7 +95,9 @@ namespace Hexxagon {
     }
 
     auto Board::parseFen(std::string const &fen) -> void {
-        auto columns = HexxagonUtil::splitString(fen, '/');
+        auto gameInfo = HexxagonUtil::splitString(fen, ' ');
+        auto currentTurn = gameInfo[1];
+        auto columns = HexxagonUtil::splitString(gameInfo[0], '/');
         auto player1 = players[0];
         auto player2 = players[1];
 
@@ -99,8 +121,43 @@ namespace Hexxagon {
                     fmt::println("Invalid character in FEN: {}", c);
                 }
             }
-
         }
+        current_turn = currentTurn == "r" ? PlayableSides::Side::RUBIES : PlayableSides::Side::PEARLS;
+    }
+
+    auto Board::getFen() -> std::string {
+        std::string fen;
+        for (int vert = -size; vert <= size; vert++) {
+            int diagStart = (vert <= 0) ? -size : -size + vert;
+            int diagEnd = (vert > 0) ? size : size - vert;
+            int emptyCount = 0;
+            for (int diag = diagStart; diag <= diagEnd; diag++) {
+                auto tile = getTile({diag, vert});
+                if (tile.has_value()) {
+                    auto tileStatus = *tile.value()->getStatus();
+                    if (tileStatus == Tile::EMPTY) {
+                        emptyCount++;
+                    } else {
+                        if (emptyCount > 0) {
+                            fen += std::to_string(emptyCount);
+                            emptyCount = 0;
+                        }
+                        fen += tileStatus == Tile::RUBY ? "r" : "p";
+                    }
+                } else if (std::find(excludedCoordinates.begin(), excludedCoordinates.end(), HexxagonUtil::Coordinate(diag, vert)) != excludedCoordinates.end()) {
+                    emptyCount++;
+                }
+            }
+            if (emptyCount > 0) {
+                fen += std::to_string(emptyCount);
+            }
+            if (vert != size) {
+                fen += "/";
+            }
+        }
+        fen += " ";
+        fen += current_turn == PlayableSides::Side::RUBIES ? "r" : "p";
+        return fen;
     }
 
     auto Board::loadStartingPosition() -> void {
@@ -129,7 +186,7 @@ namespace Hexxagon {
         return side == PlayableSides::Side::RUBIES ? rubyShape : pearlShape;
     }
 
-    auto Board::loadBoard() -> void {
+    auto Board::loadBoard(std::vector<HexxagonUtil::Coordinate> const &excluded = {}) -> void {
         auto const ex_tile = Tile({0,0});
 
         auto const hexWidth = 2 * ex_tile.getRadius();
@@ -141,11 +198,7 @@ namespace Hexxagon {
 
         auto rows = size;
 
-        auto excludedCoordinates = std::vector<HexxagonUtil::Coordinate>{
-                {-1, 0},
-                {0, -1},
-                {1, 1},
-        };  // holes in the middle of the board
+        excludedCoordinates = excluded; // holes in the middle of the board
 
         auto const offsetX = width / 2 - (hexWidth * rows) / 2;
         auto const offsetY = window->getWindowHeightPartition() * 2;
@@ -178,6 +231,7 @@ namespace Hexxagon {
     }
 
     auto Board::drawBoard(Hexxagon::WindowWrapper &window) -> void {
+
         if (!tiles.empty()) {  // to perform all the calculations only once
             // Put intermediate functions here ----
             //

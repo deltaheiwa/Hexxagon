@@ -275,7 +275,9 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
                 return;
             }
             auto side = player->getSide();
-            auto move = Move(selectedCoordinate, pressedTile, side, isOneStep);
+            auto move = Move(*selectedCoordinate, pressedTile, side, isOneStep);
+            fmt::println("Performing move: {}", move.toStr());
+            board->removeSelectedHighlights();
             GameManager::getInstance()->setBufferedMove(&move);
         }
         return;
@@ -287,6 +289,15 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
         player->setSelectedCoordinate(pressedTile);
     }
 
+}
+
+void WindowWrapper::GameEventHandler::handleInGameKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) {
+    if (key.code == sf::Keyboard::Escape) {
+        window->setState(WindowWrapper::WINDOW_STATE::PAUSED);
+    }
+    else if (key.code == sf::Keyboard::Space) {
+        fmt::println("{}", GameManager::getInstance()->getBoard()->getFen());
+    }
 }
 
 void WindowWrapper::processEvents() {
@@ -302,7 +313,7 @@ void WindowWrapper::processEvents() {
                         determineMenuLayer(event);
                         break;
                     case WINDOW_STATE::IN_GAME:
-
+                        GameEventHandler::handleInGameKeyPressed(this, event.key);
                         break;
                     case WINDOW_STATE::PAUSED:
                         break;

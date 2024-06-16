@@ -63,7 +63,7 @@ auto GameManager::createBoard() -> void {
             .addPlayer(std::move(player2))
             .build();
     board->structureShapes();
-    board->loadBoard();
+    board->loadBoard({{-1, 0},{0, -1},{1, 1}});
     board->loadStartingPosition();
     board->drawBoard(*window);
 }
@@ -84,6 +84,11 @@ auto GameManager::performMove() -> void {
     if (!buffered_move->isCopy()) {
         board->removePawn(buffered_move->getFrom());
     }
+
+    board->convertPawns(buffered_move->getTo(), buffered_move->getSide());
+
+    board->switchTurn();
+    // setLastMove(buffered_move);
     clearBufferedMove();
     player->clearSelectedCoordinate();
 }

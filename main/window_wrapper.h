@@ -71,6 +71,7 @@ private:
 
     class GameEventHandler {
     public:
+        static auto handleInGameKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) -> void;
         static auto handleInGameMousePressed(WindowWrapper* window, sf::Event::MouseButtonEvent mouse) -> void;
     };
 

@@ -26,6 +26,10 @@ namespace Hexxagon {
         return is_copy;
     }
 
+    auto Move::toStr() const -> std::string {
+        return (is_copy ? "Copy " : "Move ") + std::to_string(from.diagonal) + ", " + std::to_string(from.vertical) + " -> " + std::to_string(to.diagonal) + ", " + std::to_string(to.vertical) + " (" + std::to_string(value) + ")";
+    }
+
     auto Move::getValue() const -> int {
         return value;
     }
