@@ -118,13 +118,13 @@ void WindowWrapper::render() {
     background.drawParticles();
 
     switch (state) {
-        case (WINDOW_STATE::MENU):
+        case (MENU):
             handleMenu();
             break;
-        case (WINDOW_STATE::IN_GAME):
+        case (IN_GAME):
             handleInGame();
             break;
-        case (WINDOW_STATE::PAUSED):
+        case (PAUSED):
             handlePause();
             break;
     }
@@ -177,12 +177,14 @@ void WindowWrapper::MenuEventHandler::handleStartSelectMenuKeyPressed(WindowWrap
     if (key.code == sf::Keyboard::Enter) {
         switch (MenuCache::getSelectedStartSelectMenuButton()) {
             case MenuCache::START_SELECT_MENU_BUTTON::PLAYER_VS_PLAYER:
-                window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                window->setState(IN_GAME);
                 Board::setGameMode(false);
+                GameManager::getInstance()->onGameScene();
                 break;
             case MenuCache::START_SELECT_MENU_BUTTON::PLAYER_VS_AI:
-                window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                window->setState(IN_GAME);
                 Board::setGameMode(true);
+                GameManager::getInstance()->onGameScene();
                 break;
             case MenuCache::START_SELECT_MENU_BUTTON::BACK_START:
                 MenuCache::setCurrentLayer(MenuCache::MENU_LAYER::MAIN);
@@ -204,7 +206,8 @@ void WindowWrapper::MenuEventHandler::handleLoadSelectMenuKeyPressed(WindowWrapp
         switch (MenuCache::getSelectedLoadSelectMenuButton()) {
             case MenuCache::LOAD_SELECT_MENU_BUTTON::LOAD_GAME:
                 GameManager::getInstance()->loadGameFromFile(HexxagonUtil::getFilesInDirectory(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH"))[MenuCache::getSelectedSaveIndex()].filename().string());
-                window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                window->setState(IN_GAME);
+                GameManager::getInstance()->onGameScene();
                 break;
             case MenuCache::LOAD_SELECT_MENU_BUTTON::BACK_LOAD:
                 MenuCache::setCurrentLayer(MenuCache::MENU_LAYER::MAIN);
@@ -312,7 +315,7 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
 
 void WindowWrapper::GameEventHandler::handleInGameKeyPressed(WindowWrapper* window, sf::Event::KeyEvent key) {
     if (key.code == sf::Keyboard::Escape) {
-        window->setState(WindowWrapper::WINDOW_STATE::PAUSED);
+        window->setState(PAUSED);
     }
     else if (key.code == sf::Keyboard::Space) {
         fmt::println("{}", GameManager::getInstance()->getBoard()->getFen());
@@ -328,35 +331,34 @@ void WindowWrapper::processEvents() {
                 break;
             case sf::Event::KeyPressed:
                 switch (state) {
-                    case WINDOW_STATE::MENU:
+                    case MENU:
                         determineMenuLayer(event);
                         break;
-                    case WINDOW_STATE::IN_GAME:
+                    case IN_GAME:
                         GameEventHandler::handleInGameKeyPressed(this, event.key);
                         break;
-                    case WINDOW_STATE::PAUSED:
+                    case PAUSED:
                         PauseEventHandler::handlePauseEvent(this, event);
                         break;
                 }
                 break;
             case sf::Event::MouseButtonPressed:
                 switch (state) {
-                    case WINDOW_STATE::MENU:
+                    case MENU:
                         break;
-                    case WINDOW_STATE::IN_GAME:
+                    case IN_GAME:
                         GameEventHandler::handleInGameMousePressed(this, event.mouseButton);
                         break;
-                    case WINDOW_STATE::PAUSED:
+                    case PAUSED:
                         break;
                 }
                 break;
             case sf::Event::TextEntered:
                 switch (state) {
-                    case WINDOW_STATE::MENU:
+                    case MENU:
+                    case IN_GAME:
                         break;
-                    case WINDOW_STATE::IN_GAME:
-                        break;
-                    case WINDOW_STATE::PAUSED:
+                    case PAUSED:
                         PauseEventHandler::handlePauseEvent(this, event);
                         break;
                 }
@@ -371,7 +373,7 @@ void WindowWrapper::handleMenu() {
     sf::Font font = loadFont();
 
     sf::Text titleText("Hexxagon", font, 100);
-    titleText.setPosition((float)(windowWidth/2.5), (float)(windowHeight/windowHeightPartition));
+    titleText.setPosition(static_cast<float>(windowWidth / 2.5), static_cast<float>(windowHeight)/windowHeightPartition);
     draw(titleText);
 
 
@@ -642,17 +644,18 @@ auto WindowWrapper::PauseEventHandler::handlePauseEvent(WindowWrapper* window, s
         if (event.key.code == sf::Keyboard::Enter) {
             switch (PauseCache::getSelectedPauseButton()) {
                 case PauseCache::PAUSE_BUTTON::RESUME:
-                    window->setState(WindowWrapper::WINDOW_STATE::IN_GAME);
+                    window->setState(IN_GAME);
+                    GameManager::getInstance()->onGameScene();
                     break;
                 case PauseCache::PAUSE_BUTTON::SAVE:
                     if (inputText.empty()) {
                         break;
                     }
                     GameManager::getInstance()->saveGameToFile(inputText + ".hex");
-                    window->setState(WindowWrapper::WINDOW_STATE::MENU);
+                    window->setState(MENU);
                     break;
                 case PauseCache::PAUSE_BUTTON::MAIN_MENU:
-                    window->setState(WindowWrapper::WINDOW_STATE::MENU);
+                    window->setState(MENU);
                     GameManager::getInstance()->removeBoard();
                     break;
                 case PauseCache::PAUSE_BUTTON::CYCLE_BACK_PAUSE:

@@ -76,21 +76,19 @@ auto GameManager::performMove(const Move* move) -> void {
     board->switchTurn();
 }
 
-auto GameManager::run() -> void {
+auto GameManager::run() const -> void {
     // General idea of a game loop.
     while (window->isOpen()) {
         window->processEvents();
-        update();
         window->render();
     }
 
 }
 
-auto GameManager::update() -> void {
+auto GameManager::onGameScene() -> void {
     if (board == nullptr && window->getState() == WindowWrapper::WINDOW_STATE::IN_GAME) {
         createBoard();
     }
-    // performMove();
 }
 
 auto GameManager::saveGameToFile(std::string const &filename) -> void {

@@ -284,7 +284,7 @@ namespace Hexxagon {
                 if (const_cast<Tile *>(tile.value())->getStatus() == Tile::EMPTY) {
                     auto tileShape = const_cast<Tile *>(tile.value())->getShape();
                     tileShape->setOutlineColor(color);
-                    tileShape->setOutlineThickness(5);
+                    tileShape->setOutlineThickness(-5); // For outline inside
                 }
             }
         }
@@ -304,7 +304,7 @@ namespace Hexxagon {
         if (tile.has_value()) {
             auto tileShape = const_cast<Tile *>(tile.value())->getShape();
             tileShape->setOutlineColor(HexxagonUtil::CustomColors::Teal);
-            tileShape->setOutlineThickness(5);
+            tileShape->setOutlineThickness(-5);
         }
     }
 

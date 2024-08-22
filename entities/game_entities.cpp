@@ -1,20 +1,32 @@
 #include "tile.h"
+#include <cmath>
 
 namespace Hexxagon {
-    Tile::Tile(HexxagonUtil::Coordinate c) : status(TileStatus::EMPTY), coordinate(c) {
+    const float HexagonShape::pi = 3.1415;
+
+    std::size_t HexagonShape::getPointCount() const {
+        return 6;
+    }
+
+    sf::Vector2f HexagonShape::getPoint(std::size_t index) const {
+        float angle = 2 * pi * index / 6;
+        float x = std::cos(angle) * m_radius;
+        float y = std::sin(angle) * m_radius;
+        return {m_radius + x, m_radius + y};
+    }
+
+    Tile::Tile(HexxagonUtil::Coordinate c) : status(TileStatus::EMPTY), shape(HexagonShape(getRadius())), coordinate(c){
         structureShape();
     }
 
-    Tile::Tile(HexxagonUtil::Coordinate c, TileStatus status) : status(status), coordinate(c) {
+    Tile::Tile(HexxagonUtil::Coordinate c, TileStatus status) : status(status), shape(HexagonShape(getRadius())), coordinate(c) {
         structureShape();
     }
 
     void Tile::structureShape() {
-        shape.setPointCount(6);
-        shape.setRadius(radius);
-        shape.setRotation(90);
-        shape.setOrigin(radius, radius);
-        shape.setOutlineThickness(2);
+        // shape.setRotation(90);
+        shape.setOrigin(getRadius(), getRadius());
+        shape.setOutlineThickness(-2);
         setFillColor(HexxagonUtil::CustomColors::DarkPurple);
         setOutlineColor(HexxagonUtil::CustomColors::PurplishPink);
     }
@@ -23,17 +35,18 @@ namespace Hexxagon {
         return coordinate;
     }
 
-    auto Tile::getRadius() const -> float {
+    auto Tile::getRadius() -> float {
         return radius;
     }
 
-    auto Tile::getShape() -> sf::CircleShape* {
+    auto Tile::getShape() -> HexagonShape* {
         return &shape;
     }
 
     auto Tile::getStatus() const -> Tile::TileStatus {
         return status;
     }
+
 
     auto Tile::getPixelPosition() const -> std::pair<float, float> {
         return std::make_pair(x, y);

@@ -5,6 +5,21 @@
 #include "../main/util.h"
 
 namespace Hexxagon {
+    class HexagonShape : public sf::Shape {
+    public:
+        explicit HexagonShape(const float radius) : m_radius(radius) {
+            update();
+        }
+
+        std::size_t getPointCount() const override;
+
+        sf::Vector2f getPoint(std::size_t index) const override;
+
+    private:
+        float m_radius;
+        static const float pi;
+    };
+
     class Tile {
     public:
         enum TileStatus {
@@ -14,7 +29,7 @@ namespace Hexxagon {
         };
     private:
         TileStatus status;
-        sf::CircleShape shape;
+        HexagonShape shape;
         HexxagonUtil::Coordinate coordinate;
         float x;
         float y;
@@ -24,7 +39,8 @@ namespace Hexxagon {
 
         void structureShape();
     public:
-        Tile() = default;
+        Tile(): shape(HexagonShape(radius)) {}
+
         Tile(HexxagonUtil::Coordinate c);
         Tile(HexxagonUtil::Coordinate c, TileStatus status);
 
@@ -43,11 +59,11 @@ namespace Hexxagon {
 
         HexxagonUtil::Coordinate getCoordinate() const;
 
-        float getRadius() const;
+        static float getRadius() ;
 
         auto getStatus() const -> TileStatus;
 
-        auto getShape() -> sf::CircleShape*;
+        auto getShape() -> HexagonShape*;
 
         std::pair<float, float> getPixelPosition() const;
 

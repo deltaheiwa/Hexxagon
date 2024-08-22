@@ -38,12 +38,13 @@ public:
     auto createBoard() -> void;
     auto performMove(const Move* move) -> void;
     auto removeBoard() -> void;
+    auto onGameScene() -> void;
 
     auto setLastMove(Move* move) -> void;
     auto getLastMove() -> Move*;
     auto clearLastMove() -> void;
 
-    auto run() -> void;
+    auto run() const -> void;
 
     auto saveGameToFile(std::string const &filename) -> void;
     auto loadGameFromFile(std::string const &filename) -> void;
@@ -53,8 +54,6 @@ private:
     std::shared_ptr<Board> board = nullptr;
 
     Move* last_move = nullptr;
-
-    auto update() -> void;
 
     auto checkGameEnd() -> void;
 };
