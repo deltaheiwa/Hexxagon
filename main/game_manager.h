@@ -36,11 +36,8 @@ public:
     auto getWindow() -> std::shared_ptr<WindowWrapper>;
     auto getBoard() -> std::shared_ptr<Board>;
     auto createBoard() -> void;
-    auto performMove() -> void;
-
-    auto setBufferedMove(Move* move) -> void;
-    auto getBufferedMove() -> Move*;
-    auto clearBufferedMove() -> void;
+    auto performMove(const Move* move) -> void;
+    auto removeBoard() -> void;
 
     auto setLastMove(Move* move) -> void;
     auto getLastMove() -> Move*;
@@ -57,9 +54,9 @@ private:
 
     Move* last_move = nullptr;
 
-    Move* buffered_move = nullptr;
-
     auto update() -> void;
+
+    auto checkGameEnd() -> void;
 };
 
 template<typename P>

@@ -297,7 +297,7 @@ void WindowWrapper::GameEventHandler::handleInGameMousePressed(WindowWrapper* wi
             auto move = Move(*selectedCoordinate, pressedTile, side, isOneStep);
             fmt::println("Performing move: {}", move.toStr());
             board->removeSelectedHighlights();
-            GameManager::getInstance()->setBufferedMove(&move);
+            GameManager::getInstance()->performMove(&move);
         }
         return;
     }
@@ -653,6 +653,7 @@ auto WindowWrapper::PauseEventHandler::handlePauseEvent(WindowWrapper* window, s
                     break;
                 case PauseCache::PAUSE_BUTTON::MAIN_MENU:
                     window->setState(WindowWrapper::WINDOW_STATE::MENU);
+                    GameManager::getInstance()->removeBoard();
                     break;
                 case PauseCache::PAUSE_BUTTON::CYCLE_BACK_PAUSE:
                     break;

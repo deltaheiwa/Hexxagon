@@ -29,17 +29,6 @@ auto GameManager::getBoard() -> std::shared_ptr<Board> {
     return board;
 }
 
-auto GameManager::setBufferedMove(Move* move) -> void {
-    buffered_move = move;
-}
-
-auto GameManager::getBufferedMove() -> Move* {
-    return buffered_move;
-}
-
-auto GameManager::clearBufferedMove() -> void {
-    buffered_move = nullptr;
-}
 
 auto GameManager::setLastMove(Move* move) -> void {
     last_move = move;
@@ -53,8 +42,19 @@ auto GameManager::clearLastMove() -> void {
     last_move = nullptr;
 }
 
-auto GameManager::performMove() -> void {
-    if (buffered_move == nullptr) {
+auto GameManager::checkGameEnd() -> void {
+    bool isEmptyTiles = board->isNoEmptyTiles6();
+    if (isEmptyTiles) {
+        fmt::print("Game ended\n");
+    }
+}
+
+auto GameManager::removeBoard() -> void {
+    board = nullptr;
+}
+
+auto GameManager::performMove(const Move* move) -> void {
+    if (move == nullptr) {
         return;
     }
     auto playerOptional = board->getPlayer(board->getCurrentTurn());
@@ -63,23 +63,17 @@ auto GameManager::performMove() -> void {
     }
     auto player = playerOptional.value();
 
-
-
-    board->addPawn(buffered_move->getTo(), buffered_move->getSide());
-    if (!buffered_move->isCopy()) {
-        board->removePawn(buffered_move->getFrom());
+    board->addPawn(move->getTo(), move->getSide());
+    if (!move->isCopy()) {
+        board->removePawn(move->getFrom());
     }
 
-    board->convertPawns(buffered_move->getTo(), buffered_move->getSide());
+    board->convertPawns(move->getTo(), move->getSide());
 
-    /*if (board->isNoEmptyTiles()) {
-        fmt::print("No empty tiles\n");
-    }*/
-
-    board->switchTurn();
-    // setLastMove(buffered_move);
-    clearBufferedMove();
     player->clearSelectedCoordinate();
+
+    checkGameEnd();
+    board->switchTurn();
 }
 
 auto GameManager::run() -> void {
@@ -96,7 +90,7 @@ auto GameManager::update() -> void {
     if (board == nullptr && window->getState() == WindowWrapper::WINDOW_STATE::IN_GAME) {
         createBoard();
     }
-    performMove();
+    // performMove();
 }
 
 auto GameManager::saveGameToFile(std::string const &filename) -> void {
