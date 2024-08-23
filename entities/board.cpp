@@ -166,13 +166,13 @@ namespace Hexxagon {
         parseFen(starting_position);
     }
 
-    auto Board::isNoEmptyTiles6() const -> bool {
-        for (int vert6 = -size; vert6 <= size; vert6++) {
-            int diagStart6 = (vert6 <= 0) ? -size : -size + vert6;
-            int diagEnd6 = (vert6 < 0) ? size : size + vert6;
-            for (int diag6 = diagStart6; diag6 <= diagEnd6; diag6++) {
-                fmt::println("Checking tile at ({}, {})", diag6, vert6);
-                auto tilePtr = getTile({diag6, vert6});
+    auto Board::isNoEmptyTiles() const -> bool {
+        for (int vert = -size; vert <= size; vert++) {
+            int diagStart = (vert <= 0) ? -size : -size + vert;
+            int diagEnd = (vert < 0) ? size : size + vert;
+            for (int diag6 = diagStart; diag6 <= diagEnd; diag6++) {
+                fmt::println("Checking tile at ({}, {})", diag6, vert);
+                auto tilePtr = getTile({diag6, vert});
                 if (tilePtr.has_value() && const_cast<Tile *>(tilePtr.value())->getStatus() == Tile::EMPTY) {
                     return false;
                 }

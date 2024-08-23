@@ -18,18 +18,26 @@ int WindowWrapper::MenuCache::selectedSaveIndex = 0;
 
 WindowWrapper::PauseCache::PAUSE_BUTTON WindowWrapper::PauseCache::selectedPauseButton;
 std::string WindowWrapper::PauseCache::saveFileName = std::string();
+std::map<std::pair<uint, uint>, std::string> WindowWrapper::allowed_resolutions = {
+    {{1920,1080}, "FHD"},
+    {{1600,900}, "T60x900"},
+    {{1440,1050}, "T44x1050"},
+    {{1280,720}, "T28x720"},
+    {{1024,768}, "T024x768"}
+};
 
 WindowWrapper::WindowWrapper(
         sf::VideoMode mode,
         const std::string& title,
-        WINDOW_STATE windowState
-        ) : super(mode, title, sf::Style::Titlebar | sf::Style::Close) // I didn't want to deal with resizing, so I just disabled it
+        WINDOW_STATE windowState,
+        const WindowResolutionConfig &windowRes
+        ) : super(mode, title, sf::Style::Titlebar | sf::Style::Close)
         {
     state = windowState;
     background = Background();
-    cacheWindowSize(mode.width, mode.height);
+    window_res = windowRes;
     loadIcon();
-    backgroundThread = std::make_unique<std::thread>(&Hexxagon::Background::run, &background);
+    backgroundThread = std::make_unique<std::thread>(&Background::run, &background);
 }
 
 void WindowWrapper::loadIcon() {
@@ -49,6 +57,50 @@ sf::Font WindowWrapper::loadFont() {
     }
     return font;
 }
+
+bool WindowWrapper::WindowResolutionConfig::isValid() const {
+    return allowed_resolutions.contains({width, height});
+}
+
+void WindowWrapper::WindowResolutionConfig::normalize() {
+    if (!isValid()) {
+        for (auto const& [key, value] : allowed_resolutions) {
+            if (key.first + key.second < width + height) {
+                fullscreen = false;
+                scale_str = value;
+            }
+        }
+    } else {
+        scale_str = allowed_resolutions.at({width, height});
+    }
+}
+
+void WindowWrapper::WindowResolutionConfig::saveToFile() const {
+    std::ofstream file(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH") / "config.cfg");
+    file << scale_str << (fullscreen ? "F" : "W");
+    file.close();
+}
+
+auto WindowWrapper::WindowResolutionConfig::loadFromFile() -> WindowResolutionConfig {
+    std::ifstream file(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH") / "config.cfg");
+    std::string scale;
+
+    file >> scale;
+    file.close();
+
+    bool fullscreen = scale.ends_with('F'); scale.pop_back();
+    fmt::print("Loaded scale: {}, fullscreen: {}\n", scale, fullscreen);
+    unsigned int width = 0;
+    unsigned int height = 0;
+    for (auto const& [key, value] : allowed_resolutions) {
+        if (value == scale) {
+            width = key.first;
+            height = key.second;
+        }
+    }
+    return { width, height, fullscreen };
+}
+
 
 // ------------------ Menu cache ------------------
 
@@ -85,30 +137,23 @@ auto WindowWrapper::MenuCache::setCurrentLayer(MENU_LAYER const &layer) -> void 
 };
 
 // ------------------ Menu cache ------------------
-
-void WindowWrapper::cacheWindowSize(unsigned int width, unsigned int height) {
-    windowWidth = width;
-    windowHeight = height;
-    windowHeightPartition = height / 18;
-}
-
 sf::Vector2i WindowWrapper::getMousePosition() {
     return sf::Mouse::getPosition(*this);
 }
 
-float WindowWrapper::getWindowHeightPartition() {
-    return windowHeightPartition;
+float WindowWrapper::getWindowHeightPartition() const {
+    return window_res.heightPartition;
 }
 
 std::pair<unsigned int, unsigned int> WindowWrapper::getWindowDims() {
-    return {windowWidth, windowHeight};
+    return {window_res.width, window_res.height};
 }
 
 auto WindowWrapper::getState() const -> WINDOW_STATE {
     return state;
 }
 
-auto WindowWrapper::setState(WINDOW_STATE const &game_state) {
+auto WindowWrapper::setState(WINDOW_STATE const &game_state) -> void {
     state = game_state;
 }
 
@@ -373,7 +418,7 @@ void WindowWrapper::handleMenu() {
     sf::Font font = loadFont();
 
     sf::Text titleText("Hexxagon", font, 100);
-    titleText.setPosition(static_cast<float>(windowWidth / 2.5), static_cast<float>(windowHeight)/windowHeightPartition);
+    titleText.setPosition(static_cast<float>(window_res.width / 2.5), static_cast<float>(window_res.height)/window_res.heightPartition);
     draw(titleText);
 
 
@@ -399,15 +444,15 @@ void WindowWrapper::drawMainMenu(sf::Font &font) {
     static sf::Vector2f arrowPosition;
 
     sf::Text startText("Start game", font, 50);
-    startText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    startText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*12));
     draw(startText);
 
     sf::Text loadText("Load game", font, 50);
-    loadText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*11));
+    loadText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*11));
     draw(loadText);
 
     sf::Text exitText("Quit", font, 50);
-    exitText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    exitText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*10));
     draw(exitText);
 
 
@@ -451,15 +496,15 @@ void WindowWrapper::drawStartSelectMenu(sf::Font &font) {
     static sf::Vector2f arrowPosition;
 
     sf::Text hotSeatText("Hot seat", font, 50);
-    hotSeatText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    hotSeatText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*12));
     draw(hotSeatText);
 
     sf::Text aiText("Computer", font, 50);
-    aiText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*11));
+    aiText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*11));
     draw(aiText);
 
     sf::Text backText("Back", font, 50);
-    backText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    backText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*10));
     draw(backText);
 
     auto mousePosition = getMousePosition();
@@ -511,19 +556,19 @@ void WindowWrapper::drawLoadSelectMenu(sf::Font &font) {
     auto selectedSaveIndex = MenuCache::getSelectedSaveIndex();
 
     sf::Text arrowSelectLeft("<", font, 50);
-    arrowSelectLeft.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    arrowSelectLeft.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*12));
     draw(arrowSelectLeft);
 
-    saveTexts[selectedSaveIndex].setPosition((float)(windowWidth/4 + 30), (float)(windowHeight - windowHeightPartition*12));
+    saveTexts[selectedSaveIndex].setPosition((float)(window_res.width/4 + 30), (float)(window_res.height - window_res.heightPartition*12));
     draw(saveTexts[selectedSaveIndex]);
 
     sf::Text arrowSelectRight(">", font, 50);
-    arrowSelectRight.setPosition((float)(windowWidth/4 + 60 + saveTexts[selectedSaveIndex].getGlobalBounds().width), (float)(windowHeight - windowHeightPartition*12));
+    arrowSelectRight.setPosition((float)(window_res.width/4 + 60 + saveTexts[selectedSaveIndex].getGlobalBounds().width), (float)(window_res.height - window_res.heightPartition*12));
     draw(arrowSelectRight);
 
 
     sf::Text backText("Back", font, 50);
-    backText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    backText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*10));
     draw(backText);
 
     auto mousePosition = getMousePosition();
@@ -566,17 +611,17 @@ void WindowWrapper::handlePause() {
     sf::Font font = loadFont();
 
     sf::Text titleText("Hexxagon", font, 100);
-    titleText.setPosition((float)(windowWidth/2.5), (float)(windowHeight/windowHeightPartition));
+    titleText.setPosition((float)(window_res.width/2.5), (float)(window_res.height/window_res.heightPartition));
     draw(titleText);
 
     static sf::Vector2f arrowPosition;
 
     sf::Text resumeText("Resume", font, 50);
-    resumeText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*12));
+    resumeText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*12));
     draw(resumeText);
 
     sf::Text saveText("Save Game", font, 50);
-    saveText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*11));
+    saveText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*11));
     draw(saveText);
 
     auto inputString = PauseCache::getSaveFileName();
@@ -584,11 +629,11 @@ void WindowWrapper::handlePause() {
     saveGameInput.setString(inputString);
     saveGameInput.setFont(font);
     saveGameInput.setCharacterSize(50);
-    saveGameInput.setPosition((float)(windowWidth/4 + 200), (float)(windowHeight - windowHeightPartition*11));
+    saveGameInput.setPosition((float)(window_res.width/4 + 200), (float)(window_res.height - window_res.heightPartition*11));
     draw(saveGameInput);
 
     sf::Text quitText("Quit", font, 50);
-    quitText.setPosition((float)(windowWidth/4), (float)(windowHeight - windowHeightPartition*10));
+    quitText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*10));
     draw(quitText);
 
     auto mousePosition = getMousePosition();

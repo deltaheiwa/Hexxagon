@@ -1,6 +1,8 @@
 #ifndef HEXAGON_WINDOW_WRAPPER_H
 #define HEXAGON_WINDOW_WRAPPER_H
 
+#include <fstream>
+
 #include "SFML/Graphics.hpp"
 #include "background.h"
 #include <memory>
@@ -11,11 +13,41 @@ namespace Hexxagon {
 }
 
 class Hexxagon::WindowWrapper final : public sf::RenderWindow {
+protected:
+    static std::map<std::pair<uint, uint>, std::string> allowed_resolutions;
+public:
+    struct WindowResolutionConfig {
+        unsigned int width;
+        unsigned int height;
+        bool fullscreen;
+        float heightPartition = height / 18.0f;
+    private:
+        std::string scale_str;
+    public:
+        WindowResolutionConfig() : width(1600), height(900), fullscreen(false), scale_str("FHD") {}
+        WindowResolutionConfig(const unsigned int width, const unsigned int height, const bool fullscreen) : width(width), height(height), fullscreen(fullscreen) {
+            normalize();
+        }
+
+        bool isValid() const;
+
+        void normalize();
+
+        void saveToFile() const;
+
+        static auto loadFromFile() -> WindowResolutionConfig;
+    };
 private:
     const std::string FONT_PATH = "../assets/pixelFont.ttf";
-    unsigned int windowWidth = 0;
-    unsigned int windowHeight = 0;
-    float windowHeightPartition = 0;
+    WindowResolutionConfig window_res;
+
+    enum WINDOW_RESOLUTION_SCALE {
+        FHD = 10,
+        T60x900 = 9,
+        T44x1050 = 8,
+        T28x720 = 7,
+        T024x768 = 6
+    };
 
     class MenuCache {
     public:
@@ -137,17 +169,15 @@ public:
     Background background;
     std::unique_ptr<std::thread> backgroundThread;
 
-    WindowWrapper(sf::VideoMode mode, const std::string& title, WINDOW_STATE windowState);
+    WindowWrapper(sf::VideoMode mode, const std::string& title, WINDOW_STATE windowState, const WindowResolutionConfig &windowRes);
     typedef RenderWindow super;
 
     auto getState() const -> WINDOW_STATE;
-    auto setState(WINDOW_STATE const &game_state);
-
-    void cacheWindowSize(unsigned int width, unsigned int height);
+    auto setState(WINDOW_STATE const &game_state) -> void;
 
     sf::Vector2i getMousePosition();
 
-    float getWindowHeightPartition();
+    float getWindowHeightPartition() const;
 
     std::pair<unsigned int, unsigned int> getWindowDims();
 

@@ -7,6 +7,7 @@
 #include "window_wrapper.h"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "../entities/board.h"
+#include "fmt/chrono.h"
 
 namespace Hexxagon {
     class GameManager;
@@ -21,7 +22,8 @@ public:
     GameManager(GameManager &other_instance) = delete;
     ~GameManager() = delete;
 
-    static GameManager* getInstance();
+
+    static GameManager* getInstance(const WindowWrapper::WindowResolutionConfig* window_res = nullptr);
 
     template<typename T>
     static auto addConstant(std::string const &constant_name, T constantVariable) -> void {
@@ -50,6 +52,9 @@ public:
     auto loadGameFromFile(std::string const &filename) -> void;
 private:
     GameManager();
+    explicit GameManager(sf::VideoMode video_mode);
+    explicit GameManager(sf::VideoMode video_mode, const WindowWrapper::WindowResolutionConfig& window_res);
+
     std::shared_ptr<WindowWrapper> window;
     std::shared_ptr<Board> board = nullptr;
 

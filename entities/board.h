@@ -70,7 +70,7 @@ namespace Hexxagon {
 
         auto removeSelectedHighlights() -> void;
 
-        auto isNoEmptyTiles6() const -> bool;
+        auto isNoEmptyTiles() const -> bool;
     private:
         auto setTile(HexxagonUtil::Coordinate const &coordinate, Tile tile) -> Tile*;
 

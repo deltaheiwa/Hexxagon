@@ -1,23 +1,29 @@
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
 #include "game_manager.h"
 #include "../entities/player.h"
 #include "../entities/ai.h"
 
-#include "SFML/Graphics.hpp"
 #include "fmt/core.h"
 
 using namespace Hexxagon;
 
 
-GameManager::GameManager() : window(std::make_shared<WindowWrapper>(sf::VideoMode(1600, 900), "Hexxagon", WindowWrapper::WINDOW_STATE::MENU)), board(nullptr){
+GameManager::GameManager() : window(std::make_shared<WindowWrapper>(sf::VideoMode(1600, 900), "Hexxagon", WindowWrapper::WINDOW_STATE::MENU, WindowWrapper::WindowResolutionConfig())), board(nullptr){
     window->setFramerateLimit(60);
 }
 
-GameManager* GameManager::getInstance() {
-    static auto instance = new GameManager();
+GameManager::GameManager(sf::VideoMode video_mode) : window(std::make_shared<WindowWrapper>(video_mode, "Hexxagon", WindowWrapper::WINDOW_STATE::MENU, WindowWrapper::WindowResolutionConfig(video_mode.width, video_mode.height, false))), board(nullptr) {
+    window->setFramerateLimit(60);
+}
+
+GameManager::GameManager(sf::VideoMode video_mode, const WindowWrapper::WindowResolutionConfig& window_res) : window(std::make_shared<WindowWrapper>(video_mode, "Hexxagon", WindowWrapper::WINDOW_STATE::MENU, window_res)), board(nullptr) {
+    window->setFramerateLimit(60);
+}
+
+GameManager* GameManager::getInstance(const WindowWrapper::WindowResolutionConfig* window_res) {
+    static auto instance = window_res == nullptr ? new GameManager() : new GameManager(sf::VideoMode(window_res->width, window_res->height), *window_res);
     return instance;
 }
 
@@ -43,8 +49,7 @@ auto GameManager::clearLastMove() -> void {
 }
 
 auto GameManager::checkGameEnd() -> void {
-    bool isEmptyTiles = board->isNoEmptyTiles6();
-    if (isEmptyTiles) {
+    if (board->isNoEmptyTiles()) {
         fmt::print("Game ended\n");
     }
 }
