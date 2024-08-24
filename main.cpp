@@ -19,10 +19,11 @@ auto main() -> int {
 
     std::shared_ptr<Hexxagon::WindowWrapper::WindowResolutionConfig> window_res_ptr = nullptr;
 
+    Hexxagon::GameManager::addConstant("HEXXAGON_PATH", HEXXAGON);
+
     if (!exists(HEXXAGON)) {
         fmt::print("Creating directory {} \n", HEXXAGON.string());
         create_directory(HEXXAGON);
-        Hexxagon::GameManager::addConstant("HEXXAGON_PATH", HEXXAGON);
 
         sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
 

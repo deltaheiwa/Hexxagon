@@ -7,6 +7,7 @@
 #include "background.h"
 #include <memory>
 #include <thread>
+#include <filesystem>
 
 namespace Hexxagon {
     class WindowWrapper;
@@ -38,15 +39,15 @@ public:
         static auto loadFromFile() -> WindowResolutionConfig;
     };
 private:
-    const std::string FONT_PATH = "../assets/pixelFont.ttf";
+    const std::filesystem::path FONT_PATH = std::filesystem::current_path() / "assets" / "pixelFont.ttf";
     WindowResolutionConfig window_res;
 
     enum WINDOW_RESOLUTION_SCALE {
-        FHD = 10,
-        T60x900 = 9,
-        T44x1050 = 8,
-        T28x720 = 7,
-        T024x768 = 6
+        FHD = 12,
+        T60x900 = 10,
+        T44x1050 = 9,
+        T28x720 = 8,
+        T024x768 = 7
     };
 
     class MenuCache {
@@ -54,6 +55,7 @@ private:
         enum MAIN_MENU_BUTTON {
             PLAY,
             LOAD,
+            PREFERENCES,
             EXIT,
             CYCLE_BACK
         };
@@ -147,6 +149,10 @@ private:
     void determineMenuLayer(sf::Event event);
 
     bool isMouseOverButton(sf::Vector2i mousePosition, const sf::Text& button);
+
+    sf::Text drawButton(const std::string& text, const sf::Vector2f& position, const sf::Font& font);
+
+    void drawArrow(const sf::Vector2f& position, const sf::Font& font);
 
     void drawMainMenu(sf::Font &font);
 

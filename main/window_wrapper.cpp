@@ -31,7 +31,7 @@ WindowWrapper::WindowWrapper(
         const std::string& title,
         WINDOW_STATE windowState,
         const WindowResolutionConfig &windowRes
-        ) : super(mode, title, sf::Style::Titlebar | sf::Style::Close)
+        ) : super(mode, title, (windowRes.fullscreen ? sf::Style::Fullscreen : sf::Style::Titlebar | sf::Style::Close))
         {
     state = windowState;
     background = Background();
@@ -42,8 +42,8 @@ WindowWrapper::WindowWrapper(
 
 void WindowWrapper::loadIcon() {
     sf::Image icon;
-    if (!icon.loadFromFile("../assets/icon.png")) {
-        fmt::print("Failed to load icon from {}\n", "../assets/icon.png");
+    if (!icon.loadFromFile(std::filesystem::current_path() / "assets" / "icon.png")) {
+        fmt::print("Failed to load icon from {}\n", "assets/icon.png");
         icon.create(32, 32, sf::Color::White);
     }
     setIcon(32, 32, icon.getPixelsPtr());
@@ -52,7 +52,7 @@ void WindowWrapper::loadIcon() {
 sf::Font WindowWrapper::loadFont() {
     sf::Font font;
     if (!font.loadFromFile(FONT_PATH)) {
-        fmt::print("Failed to load font from {}\n", FONT_PATH);
+        fmt::print("Failed to load font from {}\n", FONT_PATH.string());
         exit(EXIT_FAILURE);
     }
     return font;
@@ -81,12 +81,14 @@ void WindowWrapper::WindowResolutionConfig::saveToFile() const {
     file.close();
 }
 
-auto WindowWrapper::WindowResolutionConfig::loadFromFile() -> WindowResolutionConfig {
-    std::ifstream file(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH") / "config.cfg");
+auto WindowWrapper::WindowResolutionConfig::loadFromFile() -> WindowResolutionConfig {;
+    std::ifstream file(GameManager::getConstant<std::filesystem::path>("HEXXAGON_PATH") / "config.cfg", std::ios::in);
     std::string scale;
 
     file >> scale;
     file.close();
+
+    fmt::println("{}", scale);
 
     bool fullscreen = scale.ends_with('F'); scale.pop_back();
     fmt::print("Loaded scale: {}, fullscreen: {}\n", scale, fullscreen);
@@ -440,20 +442,51 @@ bool WindowWrapper::isMouseOverButton(sf::Vector2i mousePosition, const sf::Text
     return bounds.contains(mousePosition.x, mousePosition.y);
 }
 
+sf::Text WindowWrapper::drawButton(const std::string& text, const sf::Vector2f& position, const sf::Font& font) {
+    sf::Text button(text, font, 50 * window_res.width / 1600);
+    button.setPosition(position);
+    draw(button);
+    return button;
+}
+
+void WindowWrapper::drawArrow(const sf::Vector2f& position, const sf::Font& font) {
+    if (position == sf::Vector2f(0, 0)) return;
+    sf::Text selectArrow(">", font, 50 * window_res.width / 1600);
+    selectArrow.setPosition(position.x, position.y);
+    draw(selectArrow);
+}
+
 void WindowWrapper::drawMainMenu(sf::Font &font) {
     static sf::Vector2f arrowPosition;
 
-    sf::Text startText("Start game", font, 50);
-    startText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*12));
-    draw(startText);
+    sf::Text startText = drawButton(
+        "Start",
+        {
+            static_cast<float>(window_res.width/4),
+            static_cast<float>(window_res.height - window_res.heightPartition*12)},
+            font);
 
-    sf::Text loadText("Load game", font, 50);
-    loadText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*11));
-    draw(loadText);
+    sf::Text loadText = drawButton(
+        "Load",
+        {
+            static_cast<float>(window_res.width/4),
+            static_cast<float>(window_res.height - window_res.heightPartition*11)},
+            font);
 
-    sf::Text exitText("Quit", font, 50);
-    exitText.setPosition((float)(window_res.width/4), (float)(window_res.height - window_res.heightPartition*10));
-    draw(exitText);
+    sf::Text preferencesText = drawButton(
+        "Preferences",
+        {
+            static_cast<float>(window_res.width/4),
+            static_cast<float>(window_res.height - window_res.heightPartition*10)},
+            font);
+
+    sf::Text exitText = drawButton(
+        "Exit",
+        {
+            static_cast<float>(window_res.width/4),
+            static_cast<float>(window_res.height - window_res.heightPartition*9)},
+            font);
+
 
 
     auto mousePosition = getMousePosition();
@@ -462,34 +495,36 @@ void WindowWrapper::drawMainMenu(sf::Font &font) {
         MenuCache::setSelectedMainMenuButton(MenuCache::MAIN_MENU_BUTTON::PLAY);
     } else if (isMouseOverButton(mousePosition, loadText)) {
         MenuCache::setSelectedMainMenuButton(MenuCache::MAIN_MENU_BUTTON::LOAD);
+    } else if (isMouseOverButton(mousePosition, preferencesText)) {
+        MenuCache::setSelectedMainMenuButton(MenuCache::MAIN_MENU_BUTTON::PREFERENCES);
     } else if (isMouseOverButton(mousePosition, exitText)) {
         MenuCache::setSelectedMainMenuButton(MenuCache::MAIN_MENU_BUTTON::EXIT);
     }
 
-    sf::Vector2f startPos;
-    sf::Vector2f loadPos;
-    sf::Vector2f exitPos;
+    sf::Vector2f buttonPos;
 
     switch (MenuCache::getSelectedMainMenuButton()) {
         case MenuCache::MAIN_MENU_BUTTON::PLAY:
-            startPos = startText.getPosition();
-            arrowPosition = {startPos.x - 50, startPos.y};
+            buttonPos = startText.getPosition();
+            arrowPosition = {buttonPos.x - 50, buttonPos.y};
             break;
         case MenuCache::MAIN_MENU_BUTTON::LOAD:
-            loadPos = loadText.getPosition();
-            arrowPosition = {loadPos.x - 50, loadPos.y};
+            buttonPos = loadText.getPosition();
+            arrowPosition = {buttonPos.x - 50, buttonPos.y};
+            break;
+        case MenuCache::MAIN_MENU_BUTTON::PREFERENCES:
+            buttonPos = preferencesText.getPosition();
+            arrowPosition = {buttonPos.x - 50, buttonPos.y};
             break;
         case MenuCache::MAIN_MENU_BUTTON::EXIT:
-            exitPos = exitText.getPosition();
-            arrowPosition = {exitPos.x - 50, exitPos.y};
+            buttonPos = exitText.getPosition();
+            arrowPosition = {buttonPos.x - 50, buttonPos.y};
             break;
         default:
             break;
     }
 
-    sf::Text selectArrow(">", font, 50);
-    selectArrow.setPosition(arrowPosition.x, arrowPosition.y);
-    if (arrowPosition != sf::Vector2f(0, 0)) draw(selectArrow);
+    drawArrow(arrowPosition, font);
 }
 
 void WindowWrapper::drawStartSelectMenu(sf::Font &font) {
